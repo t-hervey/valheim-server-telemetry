@@ -63,10 +63,17 @@ public sealed class TelemetrySerializerTests
         var telemetryEvent = new TelemetryEvent()
             .Add("single", 1.5f)
             .Add("double", 2.25d);
+        string result;
 
         // Act
-        string result = TelemetrySerializer.Serialize(telemetryEvent);
-        CultureInfo.CurrentCulture = originalCulture;
+        try
+        {
+            result = TelemetrySerializer.Serialize(telemetryEvent);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = originalCulture;
+        }
 
         // Assert
         result.Should().Be("{\"single\":1.5,\"double\":2.25}");

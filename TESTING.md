@@ -15,8 +15,8 @@ For void methods, Moq callbacks capture emitted arguments for state assertions. 
 | 2 | Test `TelemetryEvent` and `TelemetrySerializer`, including escaping, invariant numbers, nulls, and non-finite values | Complete | `013534f` |
 | 3 | Extract/test bounded generic collection logic and deterministic timed-cache behavior | Complete | `53e2d78` |
 | 4 | Test sink-driven tracker behavior with Moq callbacks, beginning with world-key transitions and suppression | Complete | `2d7eb69` |
-| 5 | Add practical tests for other isolated decisions; document Unity/runtime boundaries rather than creating brittle pseudo-unit tests | Complete | Current phase commit |
-| 6 | Run clean build/test, update README, review package warnings, commit, and push | Not started | — |
+| 5 | Add practical tests for other isolated decisions; document Unity/runtime boundaries rather than creating brittle pseudo-unit tests | Complete | `8943f74` |
+| 6 | Run clean build/test, update README, review package warnings, commit, and push | Complete | Current phase commit |
 
 ## Commands
 
@@ -26,6 +26,16 @@ The intended final commands are:
 dotnet build ValheimTelemetry.sln -c Release
 dotnet test ValheimTelemetry.sln -c Release --no-build
 ```
+
+## Test dependencies
+
+| Package | Version | Purpose |
+|---|---:|---|
+| `xunit.v3` | 3.2.2 | Test framework; selected as a stable .NET 8-compatible xUnit v3 release |
+| `xunit.runner.visualstudio` | 3.1.5 | `dotnet test` / VSTest discovery |
+| `Microsoft.NET.Test.Sdk` | 18.10.1 | .NET test host integration |
+| `FluentAssertions` | 7.2.2 | Readable assertions on the Apache-2.0 licensed line |
+| `Moq` | 4.20.72 | Interface test doubles and callback argument capture |
 
 ## Boundaries
 

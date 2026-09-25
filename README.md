@@ -22,7 +22,7 @@ The development tree contains uncommitted local reference copies in `../referenc
 
 ```bash
 cd /home/codex/valheim-development/ValheimTelemetry
-dotnet build -c Release
+dotnet build ValheimTelemetry.sln -c Release
 ```
 
 For another installation, override `LocalReferenceDir`, or set `ValheimManagedDir` and `BepInExCoreDir` as MSBuild properties. The target is `netstandard2.1`, determined from this Valheim 1.0 installation. The release artifact is:
@@ -30,6 +30,16 @@ For another installation, override `LocalReferenceDir`, or set `ValheimManagedDi
 ```text
 /home/codex/valheim-development/ValheimTelemetry/bin/Release/netstandard2.1/ValheimTelemetry.dll
 ```
+
+## Unit tests
+
+The .NET 8 test project uses xUnit, FluentAssertions, and Moq. Tests follow Arrange/Act/Assert and keep Unity, BepInEx, and live-world behavior outside the unit-test boundary.
+
+```bash
+dotnet test ValheimTelemetry.sln -c Release
+```
+
+The phased testing strategy, conventions, package choices, and integration-test boundaries are recorded in [TESTING.md](TESTING.md).
 
 ## Development-clone installation
 
