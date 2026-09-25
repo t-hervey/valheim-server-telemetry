@@ -5,7 +5,7 @@ This analysis is based on the installed `assembly_valheim.dll` from Valheim `l-1
 | Event/metric | Hook or data source | Server-visible | Quality |
 |---|---|---:|---|
 | `mob_spawned` | new `ZDOMan.CreateNewZDO`, classified by prefab `Character` and not `Player` | Yes | **EXACT** new-ZDO detection; source often **INFERRED** |
-| `mob_killed` | `ZDOVars.s_health` crosses to zero in `ZDO.Deserialize`/`ZDO.Set`; destruction corroboration | Usually | **HIGH_CONFIDENCE** |
+| `mob_killed` | zero/reduced health plus destruction; ordinary persistent Character destruction with explicit despawn classes excluded | Yes | **HIGH_CONFIDENCE** |
 | `active_mob` | union of ready peers' near sectors via `FindSectorObjects` | Yes | **LOADED_ENTITIES_ONLY** |
 | `portal_built` | new player-created ZDO whose prefab has `TeleportWorld` | Yes | **EXACT** |
 | `portal_destroyed` | `ZDOMan.HandleDestroyedZDO` for that portal ZDO | Yes | **EXACT** |
@@ -18,7 +18,7 @@ This analysis is based on the installed `assembly_valheim.dll` from Valheim `l-1
 | `loaded_ship` | ready peers' near sectors | Yes | **LOADED_ENTITIES_ONLY** |
 | `creature_tamed` | existing Character ZDO `tamed` false-to-true transition | Usually | **HIGH_CONFIDENCE**; method is **INFERRED** |
 | `active_tamed_creature` | tamed Character ZDOs in ready peers' near sectors | Yes | **LOADED_ENTITIES_ONLY** |
-| `tree_felled` | standing `TreeBase` ZDO health reaches zero; `TreeLog` is excluded | Usually | **HIGH_CONFIDENCE** |
+| `tree_felled` | destruction of a standing `TreeBase` ZDO; `TreeLog` is excluded | Yes | **HIGH_CONFIDENCE** |
 | persistent world totals | complete chunk store, safely and cheaply classified | Not as a supported runtime metric | **UNAVAILABLE_SERVER_ONLY** |
 
 ## Why ZDO lifecycle is used
@@ -47,7 +47,7 @@ The event is an exact newly created Character ZDO. `eventCreature`, boss prefab 
 
 ### Deaths
 
-Health zero is stronger than mere ZDO destruction: cleanup/despawn destruction alone is not called a kill. A death can be missed if the object is destroyed before the server receives zero health. When seen, prefab/type, level, position, and biome are server data; attribution is independently nullable.
+Health zero is the strongest signal, but the owning client can destroy a dead creature before its final health revision reaches the server. The tracker therefore remembers replicated health decreases and treats destruction of an ordinary persistent creature as death. Creatures marked for daytime despawn, event cleanup, or limited-instance summon cleanup require zero-health or recent-damage evidence. This closes the observed client-ordering gap while avoiding known vanilla despawn paths. Admin/mod deletion of an ordinary creature can still be a false positive. Prefab/type, level, position, and biome are server data; attribution is independently nullable.
 
 ### Pieces, portals, and ships
 
@@ -59,7 +59,7 @@ Runtime components classify the actual prefab, avoiding hard-coded name lists. `
 
 ### Trees
 
-A standing tree prefab has `TreeBase`; lethal damage sets its health to zero, spawns the fallen log/stub, and destroys the standing-tree ZDO. The resulting log has `TreeLog`, so later log chopping cannot generate `tree_felled`. A rapid network destroy without the health transition can be missed rather than guessed.
+A standing tree prefab has `TreeBase`; lethal damage spawns the fallen log/stub and destroys the standing-tree ZDO. Because the client can send that destruction before the terminal health revision, destruction of a `TreeBase` is the event signal. The resulting log has `TreeLog`, so later log chopping cannot generate `tree_felled`. Admin/mod deletion of a standing tree can look like felling.
 
 ### Snapshots
 
@@ -73,4 +73,4 @@ The dedicated server should not use its own origin-based runtime GameObject set 
 - Health/tame transitions compare old and new values; repeated identical updates do not emit again.
 - All Harmony callbacks catch exceptions. They are observers only and never return false or modify arguments/state.
 
-Known missing events are decisive client-side state never replicated before destruction, lifecycle changes during startup grace, and events in code paths that bypass vanilla ZDO lifecycle. Known possible false positives are external mods/admin operations that deliberately create/destroy or mutate otherwise vanilla-classified ZDOs, plus the narrow recent-hit attribution race described above.
+Known missing events are lifecycle changes during startup grace, explicitly despawning creatures whose damage state never reaches the server, and events in code paths that bypass vanilla ZDO lifecycle. Known possible false positives are external mods/admin operations that deliberately create/destroy or mutate otherwise vanilla-classified ZDOs, plus the narrow recent-hit attribution race described above.

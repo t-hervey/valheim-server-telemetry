@@ -99,11 +99,11 @@ Use an unmodified Valheim 1.0 client. For quicker snapshot testing, temporarily 
 ## Known limitations
 
 - Creature simulation and many damage/taming methods execute on the owning client, not necessarily the dedicated server. The plugin observes persistent server state instead.
-- Mob death, tame, and tree events can be missed if the owning client destroys an object before the server receives the decisive state transition.
+- For ordinary persistent mobs, ZDO destruction is treated as a death even when the owning client destroys it before synchronizing zero health. Explicit daytime/event/summon despawn classes still require zero-health or recent-damage evidence. Mod/admin deletion of an ordinary mob is therefore a possible false-positive kill.
 - `SpawnSystem` has no persisted source marker, so ordinary spawns are reported as `unknown`. Event, boss, summon, breeding, and connected `CreatureSpawner` cases can be classified.
-- Player identity is only present when creator data or a very recent vanilla damage RPC establishes it. Environmental deaths and ambiguous/DOT cases remain null.
+- Player identity is only present when creator data or a very recent vanilla damage RPC establishes it. When the attacking client owns the target, that RPC is handled locally and is not visible to the dedicated server; environmental, ambiguous, and DOT cases remain null.
 - Hammer removal does not reliably identify the remover. Destroy events are still correct, but attribution is normally null.
-- A very tightly timed DOT/environmental death following a direct player hit could retain the recent-hit identity for up to 0.75 seconds; this is the principal remaining false-attribution edge case to test.
+- A very tightly timed DOT/environmental death following a server-visible direct player hit could retain the recent-hit identity for up to 0.75 seconds; this is the principal remaining false-attribution edge case to test.
 - Admin commands or another mod that directly flips `tamed` from false to true can look like normal taming.
 - Snapshot definitions are active/loaded scope, never persistent-world totals.
 

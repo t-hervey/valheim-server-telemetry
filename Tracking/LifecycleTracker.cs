@@ -32,6 +32,7 @@ namespace ValheimTelemetry.Tracking
         private readonly Dictionary<ZDOID, float> _recentCreateTimes = new Dictionary<ZDOID, float>();
         private readonly Queue<RecentCreate> _recentCreateOrder = new Queue<RecentCreate>();
         private readonly BoundedEventCache _zeroHealth = new BoundedEventCache(16384);
+        private readonly BoundedTimedCache _recentDamage = new BoundedTimedCache(16384, 60f);
 
         public LifecycleTracker(PluginConfig config, ITelemetrySink sink)
         {
@@ -87,11 +88,11 @@ namespace ValheimTelemetry.Tracking
             if (zdo == null) return;
             PrefabInfo info = PrefabUtil.Describe(zdo);
             if (info == null) return;
-            if (info.IsTreeBase && (_zeroHealth.Contains(zdo.m_uid) || zdo.GetFloat(ZDOVars.s_health, float.PositiveInfinity) <= 0f))
+            if (info.IsTreeBase)
             {
                 _trees.Felled(zdo, info);
             }
-            else if (info.IsMob && (_zeroHealth.Contains(zdo.m_uid) || zdo.GetFloat(ZDOVars.s_health, float.PositiveInfinity) <= 0f))
+            else if (info.IsMob && IsProbableMobDeath(zdo))
             {
                 _mobs.Killed(zdo, info);
             }
@@ -104,7 +105,12 @@ namespace ValheimTelemetry.Tracking
         {
             if (zdo == null) return;
             float health = zdo.GetFloat(ZDOVars.s_health, float.PositiveInfinity);
-            if (health > 0f || (hadOldHealth && oldHealth <= 0f) || IsRecentlyCreated(zdo.m_uid, 5f)) return;
+            if (IsRecentlyCreated(zdo.m_uid, 5f)) return;
+            if (!float.IsPositiveInfinity(health) && (!hadOldHealth || health < oldHealth))
+            {
+                _recentDamage.Touch(zdo.m_uid);
+            }
+            if (health > 0f || (hadOldHealth && oldHealth <= 0f)) return;
             _zeroHealth.Add(zdo.m_uid);
             PrefabInfo info = PrefabUtil.Describe(zdo);
             if (info == null) return;
@@ -119,6 +125,25 @@ namespace ValheimTelemetry.Tracking
         }
 
         public void RoutedDamage(ZDOID target, HitData hit) => _hits.Record(target, hit);
+
+        private bool IsProbableMobDeath(ZDO zdo)
+        {
+            if (_zeroHealth.Contains(zdo.m_uid) || zdo.GetFloat(ZDOVars.s_health, float.PositiveInfinity) <= 0f)
+            {
+                return true;
+            }
+            if (_recentDamage.ContainsRecent(zdo.m_uid, 30f))
+            {
+                return true;
+            }
+
+            // These vanilla flags have explicit non-death destroy paths. Require
+            // health evidence for them; ordinary persistent creatures have no
+            // vanilla unload-time ZDO destruction and are therefore deaths.
+            return !zdo.GetBool(ZDOVars.s_despawnInDay, false)
+                && !zdo.GetBool(ZDOVars.s_eventCreature, false)
+                && zdo.GetInt(ZDOVars.s_maxInstances, 0) <= 0;
+        }
 
         private bool IsRecentlyCreated(ZDOID id, float seconds)
         {

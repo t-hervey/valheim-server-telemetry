@@ -6,7 +6,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>ValheimTelemetry</AssemblyName>
     <RootNamespace>ValheimTelemetry</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Deterministic>true</Deterministic>
     <DebugType>portable</DebugType>
     <LocalReferenceDir Condition="'$(LocalReferenceDir)' == '' and Exists('../references/assembly_valheim.dll')">../references</LocalReferenceDir>

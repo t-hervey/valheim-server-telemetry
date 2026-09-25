@@ -19,6 +19,12 @@ namespace ValheimTelemetry.Util
                 return null;
             }
 
+            PlayerIdentity peer = FromPeerCharacter(characterId);
+            if (peer != null)
+            {
+                return peer;
+            }
+
             ZDO zdo = ZDOMan.instance?.GetZDO(characterId);
             PrefabInfo info = PrefabUtil.Describe(zdo);
             if (zdo == null || info == null || !info.IsPlayer)
@@ -28,11 +34,10 @@ namespace ValheimTelemetry.Util
 
             long id = zdo.GetLong(ZDOVars.s_playerID, 0L);
             string name = zdo.GetString(ZDOVars.s_playerName, null);
-            PlayerIdentity peer = FromPeerCharacter(characterId);
             return new PlayerIdentity
             {
-                Id = id != 0L ? id : peer?.Id ?? 0L,
-                Name = string.IsNullOrEmpty(name) ? peer?.Name : name
+                Id = id,
+                Name = name
             };
         }
 
