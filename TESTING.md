@@ -14,8 +14,8 @@ For void methods, Moq callbacks capture emitted arguments for state assertions. 
 | 1 | Add solution/test project, package references, internals access, and smoke test | Complete | `9f623b1` |
 | 2 | Test `TelemetryEvent` and `TelemetrySerializer`, including escaping, invariant numbers, nulls, and non-finite values | Complete | `013534f` |
 | 3 | Extract/test bounded generic collection logic and deterministic timed-cache behavior | Complete | `53e2d78` |
-| 4 | Test sink-driven tracker behavior with Moq callbacks, beginning with world-key transitions and suppression | Complete | Current phase commit |
-| 5 | Add practical tests for other isolated decisions; document Unity/runtime boundaries rather than creating brittle pseudo-unit tests | Not started | — |
+| 4 | Test sink-driven tracker behavior with Moq callbacks, beginning with world-key transitions and suppression | Complete | `2d7eb69` |
+| 5 | Add practical tests for other isolated decisions; document Unity/runtime boundaries rather than creating brittle pseudo-unit tests | Complete | Current phase commit |
 | 6 | Run clean build/test, update README, review package warnings, commit, and push | Not started | — |
 
 ## Commands

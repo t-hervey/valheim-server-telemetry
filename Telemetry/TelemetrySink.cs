@@ -7,13 +7,22 @@ namespace ValheimTelemetry.Telemetry
 {
     public sealed class TelemetrySink : ITelemetrySink
     {
-        private readonly ManualLogSource _log;
-        private readonly PluginConfig _config;
+        private readonly ITelemetryLog _log;
+        private readonly string _prefix;
+        private readonly Func<DateTime> _utcNow;
+        private readonly Func<string> _worldName;
 
         public TelemetrySink(ManualLogSource log, PluginConfig config)
+            : this(new BepInExTelemetryLog(log), config.Prefix, () => DateTime.UtcNow, GetWorldName)
+        {
+        }
+
+        internal TelemetrySink(ITelemetryLog log, string prefix, Func<DateTime> utcNow, Func<string> worldName)
         {
             _log = log;
-            _config = config;
+            _prefix = prefix;
+            _utcNow = utcNow;
+            _worldName = worldName;
         }
 
         public void Emit(string eventName, Action<TelemetryEvent> populate)
@@ -23,14 +32,14 @@ namespace ValheimTelemetry.Telemetry
                 TelemetryEvent telemetryEvent = new TelemetryEvent()
                     .Add("schema_version", 1)
                     .Add("event", eventName)
-                    .Add("timestamp", DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture))
-                    .Add("world", GetWorldName());
+                    .Add("timestamp", _utcNow().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture))
+                    .Add("world", _worldName());
                 populate?.Invoke(telemetryEvent);
-                _log.LogInfo(_config.Prefix + " " + TelemetrySerializer.Serialize(telemetryEvent));
+                _log.Info(_prefix + " " + TelemetrySerializer.Serialize(telemetryEvent));
             }
             catch (Exception ex)
             {
-                _log.LogError("ValheimTelemetry sink failed safely: " + ex);
+                _log.Error("ValheimTelemetry sink failed safely: " + ex);
             }
         }
 
