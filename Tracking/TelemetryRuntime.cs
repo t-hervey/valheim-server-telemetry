@@ -28,7 +28,7 @@ namespace ValheimTelemetry.Tracking
             _snapshots = new SnapshotCollector(config, sink, log);
             _sessions = new PlayerSessionTracker(config, sink);
             _playerDeaths = new PlayerDeathTracker(config, sink);
-            _worldState = new WorldStateTracker(config, sink);
+            _worldState = new WorldStateTracker(config.WorldKeys, sink);
         }
 
         public void Tick()

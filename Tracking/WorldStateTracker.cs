@@ -1,22 +1,21 @@
-using ValheimTelemetry.Config;
 using ValheimTelemetry.Telemetry;
 
 namespace ValheimTelemetry.Tracking
 {
     internal sealed class WorldStateTracker
     {
-        private readonly PluginConfig _config;
+        private readonly bool _enabled;
         private readonly ITelemetrySink _sink;
 
-        public WorldStateTracker(PluginConfig config, ITelemetrySink sink)
+        public WorldStateTracker(bool enabled, ITelemetrySink sink)
         {
-            _config = config;
+            _enabled = enabled;
             _sink = sink;
         }
 
         public void KeySet(string fullKey, bool existed, string oldValue)
         {
-            if (!_config.WorldKeys || string.IsNullOrEmpty(fullKey)) return;
+            if (!_enabled || string.IsNullOrEmpty(fullKey)) return;
             Split(fullKey, out string key, out string value);
             if (existed && string.Equals(value ?? string.Empty, oldValue ?? string.Empty, System.StringComparison.OrdinalIgnoreCase)) return;
             _sink.Emit("world_key_changed", new TelemetryEvent()
@@ -28,7 +27,7 @@ namespace ValheimTelemetry.Tracking
 
         public void KeyRemoved(string fullKey, string oldValue)
         {
-            if (!_config.WorldKeys || string.IsNullOrEmpty(fullKey)) return;
+            if (!_enabled || string.IsNullOrEmpty(fullKey)) return;
             Split(fullKey, out string key, out _);
             _sink.Emit("world_key_changed", new TelemetryEvent()
                 .Add("action", "removed")
