@@ -17,6 +17,8 @@ namespace ValheimTelemetry.Tracking
         private readonly Dictionary<T, float> _times = new Dictionary<T, float>();
         private readonly Queue<Entry> _order = new Queue<Entry>();
 
+        internal int Count => _times.Count;
+
         public BoundedTimedCache(int capacity, float retentionSeconds, Func<float> clock)
         {
             if (capacity <= 0) throw new ArgumentOutOfRangeException(nameof(capacity));

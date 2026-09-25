@@ -41,6 +41,38 @@ public sealed class TelemetrySerializerTests
     }
 
     [Fact]
+    public void Serialize_FalseBoolean_WritesFalseLiteral()
+    {
+        // Arrange
+        var telemetryEvent = new TelemetryEvent().Add("enabled", false);
+
+        // Act
+        string result = TelemetrySerializer.Serialize(telemetryEvent);
+
+        // Assert
+        result.Should().Be("{\"enabled\":false}");
+    }
+
+    [Fact]
+    public void Serialize_AllIntegralTypes_WritesJsonNumbers()
+    {
+        // Arrange
+        var telemetryEvent = new TelemetryEvent()
+            .Add("byte", (byte)1)
+            .Add("sbyte", (sbyte)-2)
+            .Add("short", (short)-3)
+            .Add("ushort", (ushort)4)
+            .Add("uint", 5U)
+            .Add("ulong", 6UL);
+
+        // Act
+        string result = TelemetrySerializer.Serialize(telemetryEvent);
+
+        // Assert
+        result.Should().Be("{\"byte\":1,\"sbyte\":-2,\"short\":-3,\"ushort\":4,\"uint\":5,\"ulong\":6}");
+    }
+
+    [Fact]
     public void Serialize_StringWithSpecialCharacters_EscapesJsonControlCharacters()
     {
         // Arrange

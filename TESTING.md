@@ -52,3 +52,19 @@ dotnet stryker
 ```
 
 Generated `StrykerOutput` reports are intentionally excluded from Git.
+
+### Mutation result for 1.1.2
+
+The final deterministic-core run on 2026-09-25 created 171 in-scope mutants:
+
+| Result | Count |
+|---|---:|
+| Killed | 168 |
+| Timed out (detected infinite loop) | 1 |
+| Survived | 2 |
+| No coverage | 2 |
+| Mutation score | **97.69%** |
+
+The two survivors replace the `"R"` floating-point format string with the empty/default format. On the .NET 8 test runtime both formats use the same shortest round-trippable representation, so the mutants are behaviorally equivalent there. The two no-coverage mutants are in the production `ZNet.instance?.GetWorldName()` fail-safe wrapper, which requires the Unity/Valheim runtime and remains an integration-test boundary. The timeout removed the bounded-set eviction statement, producing the infinite loop Stryker was expected to detect.
+
+The mutation scope deliberately excludes Unity/Harmony/ZDO integration classes. The reported score must not be interpreted as whole-plugin code coverage.

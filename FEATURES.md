@@ -51,3 +51,4 @@ This is the canonical inventory of implemented and considered telemetry. Update 
 - **1.0.2** — added tree-sapling destruction with natural-growth suppression and connected-player name resolution for built pieces.
 - **1.1.0** — added gameplay sessions, player deaths, tamed-creature deaths, boss kills, world-key changes, and portal tag changes.
 - **1.1.1** — added the automated unit-test project and deterministic cache/sink test seams; telemetry schema and event coverage are unchanged.
+- **1.1.2** — added reproducible Stryker mutation testing and strengthened boundary tests; telemetry schema and event coverage are unchanged.

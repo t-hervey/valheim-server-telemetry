@@ -40,8 +40,14 @@ namespace ValheimTelemetry.Tracking
         {
             string normalized = fullKey.Trim().ToLowerInvariant();
             int separator = normalized.IndexOf(' ');
-            key = separator < 0 ? normalized : normalized.Substring(0, separator);
-            value = separator < 0 ? null : normalized.Substring(separator + 1).Trim();
+            if (separator == -1)
+            {
+                key = normalized;
+                value = null;
+                return;
+            }
+            key = normalized.Substring(0, separator);
+            value = normalized.Substring(separator + 1).Trim();
         }
 
         private static object EmptyToNull(string value) => string.IsNullOrEmpty(value) ? null : value;
