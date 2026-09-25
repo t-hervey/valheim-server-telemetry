@@ -11,6 +11,7 @@ Harmony postfix/prefix observers watch the server's existing persistence and rou
 - genuine ZDO creation and destruction through `ZDOMan`;
 - replicated health and tame-state changes through `ZDO.Deserialize` and local `ZDO.Set` calls;
 - copies of vanilla routed `RPC_Damage` packages for conservative player attribution;
+- vanilla peer lifecycle, player-death RPC/state, portal-tag, and global-key transitions;
 - peer active simulation sectors for periodic loaded/active counts.
 
 Callbacks only copy or read data, catch their own exceptions, and never suppress a vanilla method. `ITelemetrySink` separates event tracking from output formatting. Lifecycle caches are bounded. A 20-second post-world-load grace means existing ZDOs establish a baseline without generating build, spawn, tame, or felling events.
@@ -47,7 +48,7 @@ Do not copy this development artifact to production as part of this workflow.
 
 BepInEx generated `/home/steam/valheim_server/BepInEx/config/dev.deepnorth.valheimtelemetry.cfg`. A generated example is in [examples/dev.deepnorth.valheimtelemetry.cfg](examples/dev.deepnorth.valheimtelemetry.cfg).
 
-Defaults enable all requested event families and snapshots, include player identity and positions when reliable, use a 300-second interval, and prefix every document with `VALHEIM_TELEMETRY`. Set `DebugLogging = true` to log snapshot duration and object counts. The minimum accepted snapshot interval is 10 seconds.
+Defaults enable all event families and snapshots, including player sessions/deaths, tamed-creature deaths, boss kills, portal tag changes, and world-key changes. They include player identity and positions when reliable, use a 300-second interval, and prefix every document with `VALHEIM_TELEMETRY`. Set `DebugLogging = true` to log snapshot duration and object counts. The minimum accepted snapshot interval is 10 seconds.
 
 Configuration errors fall back to safe defaults. Disabling privacy fields keeps their JSON properties but sets their values to `null`.
 
@@ -82,21 +83,25 @@ With no connected players, a snapshot legitimately has no entity-count lines. Wi
 Use an unmodified Valheim 1.0 client. For quicker snapshot testing, temporarily set `DebugLogging = true` and `SnapshotIntervalSeconds = 10`, then restart the service.
 
 1. Restart `valheim.service`; expect initialization, server ready, then arming. Expect no lifecycle JSON during startup.
-2. Connect the vanilla client; no plugin handshake or client DLL is required.
-3. Kill one Greydwarf; expect one `mob_killed`. Identity may be null if the owning-client RPC did not traverse the server.
-4. Encounter/cause a normal spawn; expect one `mob_spawned`, usually with `spawn_source: "unknown"` for `SpawnSystem`.
-5. Build one wall; expect one `piece_built` with its raw prefab type.
-6. Destroy the wall; expect one `piece_destroyed`; destroyer identity may be null.
-7. Build and destroy a portal; expect one `portal_built` and one `portal_destroyed`, with the current tag.
-8. Build/destroy a ship through normal play if practical; expect one `ship_built` and one `ship_destroyed`.
-9. Tame an animal; expect one `creature_tamed`, method `player_tamed`, with null player identity.
-10. Breed a tamed animal; expect a `mob_spawned` with `spawn_source: "breeding"`, but no `creature_tamed`.
-11. Fell one standing tree; expect one `tree_felled`.
-12. Destroy a planted tree sapling; expect one `tree_felled` after a short growth-disambiguation delay.
-13. Let a tree sapling grow naturally; expect no `tree_felled` for the replaced sapling ZDO.
-14. Chop the resulting `TreeLog`; expect no additional `tree_felled`.
-15. Wait for a snapshot with the client connected; expect `entity_count` lines grouped by runtime type.
-16. Restart again; expect no false lifecycle events from the existing objects. Snapshot events are allowed.
+2. Connect the vanilla client; expect one `player_connected`. No plugin handshake or client DLL is required.
+3. Die and respawn; expect one `player_died`. `death_cause` is null because the authoritative cause stays on the client.
+4. Kill one Greydwarf; expect one `mob_killed`. Identity may be null if the owning-client RPC did not traverse the server.
+5. Encounter/cause a normal spawn; expect one `mob_spawned`, usually with `spawn_source: "unknown"` for `SpawnSystem`.
+6. Build one wall; expect one `piece_built` with its raw prefab type.
+7. Destroy the wall; expect one `piece_destroyed`; destroyer identity may be null.
+8. Build a portal, rename it, then destroy it; expect `portal_built`, `portal_tag_changed`, and `portal_destroyed`. Rename attribution should resolve while the author is connected.
+9. Build/destroy a ship through normal play if practical; expect one `ship_built` and one `ship_destroyed`.
+10. Tame an animal; expect one `creature_tamed`, method `player_tamed`, with null player identity.
+11. Kill a tamed animal; expect both `mob_killed` and `tamed_creature_died` for the same creature.
+12. Breed a tamed animal; expect a `mob_spawned` with `spawn_source: "breeding"`, but no `creature_tamed`.
+13. Kill a boss through normal play if practical; expect `mob_killed`, `boss_killed`, and resulting `world_key_changed` events.
+14. Fell one standing tree; expect one `tree_felled`.
+15. Destroy a planted tree sapling; expect one `tree_felled` after a short growth-disambiguation delay.
+16. Let a tree sapling grow naturally; expect no `tree_felled` for the replaced sapling ZDO.
+17. Chop the resulting `TreeLog`; expect no additional `tree_felled`.
+18. Wait for a snapshot with the client connected; expect `entity_count` lines grouped by runtime type.
+19. Disconnect; expect one `player_disconnected` with `session_duration_seconds`.
+20. Restart again; expect no false lifecycle or `world_key_changed` events from existing state. Snapshot events are allowed.
 
 ## Known limitations
 
@@ -104,10 +109,12 @@ Use an unmodified Valheim 1.0 client. For quicker snapshot testing, temporarily 
 - For ordinary persistent mobs, ZDO destruction is treated as a death even when the owning client destroys it before synchronizing zero health. Explicit daytime/event/summon despawn classes still require zero-health or recent-damage evidence. Mod/admin deletion of an ordinary mob is therefore a possible false-positive kill.
 - `SpawnSystem` has no persisted source marker, so ordinary spawns are reported as `unknown`. Event, boss, summon, breeding, and connected `CreatureSpawner` cases can be classified.
 - Player identity is only present when creator data or a very recent vanilla damage RPC establishes it. When the attacking client owns the target, that RPC is handled locally and is not visible to the dedicated server; environmental, ambiguous, and DOT cases remain null.
+- Player death occurrence is server-visible, but the dedicated server does not receive the client's `Player.m_lastHit`, so `death_cause` is deliberately null.
+- Portal tag author is resolved from the replicated platform-author identifier only while that author appears in the server's current player list.
 - Hammer removal does not reliably identify the remover. Destroy events are still correct, but attribution is normally null.
 - A very tightly timed DOT/environmental death following a server-visible direct player hit could retain the recent-hit identity for up to 0.75 seconds; this is the principal remaining false-attribution edge case to test.
 - Admin commands or another mod that directly flips `tamed` from false to true can look like normal taming.
 - Tree saplings are identified at runtime as `Plant` prefabs whose grown prefab has `TreeBase`. Their destruction is delayed three seconds and suppressed if a grown replacement tree appears nearby. An unhealthy sapling that self-destructs without producing a tree can still look like player destruction because vanilla persists no destruction cause.
 - Snapshot definitions are active/loaded scope, never persistent-world totals.
 
-Detailed hook evidence and classifications are in [OBSERVABILITY.md](OBSERVABILITY.md); the complete schema is in [EVENT_SCHEMA.md](EVENT_SCHEMA.md).
+The canonical versioned feature inventory, including deferred ideas, is [FEATURES.md](FEATURES.md). Detailed hook evidence and classifications are in [OBSERVABILITY.md](OBSERVABILITY.md); the complete schema is in [EVENT_SCHEMA.md](EVENT_SCHEMA.md).

@@ -30,7 +30,7 @@ Inspected on 2026-09-25 UTC. Paths and versions below are from this development 
 | Public listing | disabled with `-public 0` |
 | Plugin target | `netstandard2.1` |
 
-The target framework was selected from the decompiled Valheim 1.0 project metadata (`netstandard2.1`) and verified by loading the built DLL under the installed Unity Mono/BepInEx runtime. Build references point at local development copies when `../references` exists, with configurable fallback paths to the live installation. No Valheim, Unity, BepInEx, or Harmony DLL is copied into the plugin output.
+The target framework was selected from the decompiled Valheim 1.0 project metadata (`netstandard2.1`) and verified by loading the built DLL under the installed Unity Mono/BepInEx runtime. Build references point at local development copies when `../references` exists, with configurable fallback paths to the live installation. `Splatform.dll` is a compile-time reference for exact platform-author matching on portal tags. No Valheim, Unity, Splatform, BepInEx, or Harmony DLL is copied into the plugin output.
 
 Normal BepInEx `Info` logging initially went only to `LogOutput.log`. The local BepInEx console sink was enabled and `StandardOutType` set to `StandardOut`, after which plugin lines were verified in `journalctl -u valheim.service`.
 

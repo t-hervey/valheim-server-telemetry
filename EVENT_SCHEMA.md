@@ -18,6 +18,14 @@ Every physical log line contains the configured prefix, one ASCII space, and one
 
 `player_name`, `player_id`, `mob_type`, `mob_display_name`, `mob_level`, `mob_stars`, `x`, `y`, `z`, `biome`. `mob_type` is the raw prefab identifier. Stars are `max(level - 1, 0)`.
 
+## `boss_killed`
+
+`player_name`, `player_id`, `boss_type`, `boss_display_name`, `boss_level`, `boss_stars`, `x`, `y`, `z`, `biome`. The event is emitted in addition to `mob_killed` for a runtime prefab whose `Character.m_boss` flag is true. Killer identity remains null unless a reliable recent routed damage event exists.
+
+## `tamed_creature_died`
+
+`player_name`, `player_id`, `creature_type`, `creature_display_name`, `creature_level`, `creature_stars`, `x`, `y`, `z`, `biome`. The player fields describe a reliably observed killer, not the owner/tamer, and are commonly null. This event is emitted in addition to `mob_killed`.
+
 ## `mob_spawned`
 
 `mob_type`, `mob_display_name`, `mob_level`, `mob_stars`, `spawn_source`, `x`, `y`, `z`, `biome`.
@@ -27,6 +35,10 @@ Every physical log line contains the configured prefix, one ASCII space, and one
 ## `portal_built` and `portal_destroyed`
 
 `portal_type`, `portal_tag`, `player_name`, `player_id`, `x`, `y`, `z`. `portal_type` is the raw prefab identifier. At destruction, the player fields are commonly null.
+
+## `portal_tag_changed`
+
+`portal_type`, `old_portal_tag`, `portal_tag`, `player_name`, `player_id`, `x`, `y`, `z`. The actor fields are populated only when the replicated platform tag-author ID exactly matches a connected player. The initial tag associated with a newly built portal is included in `portal_built` and suppressed as a separate tag-change event.
 
 ## `piece_built` and `piece_destroyed`
 
@@ -45,6 +57,29 @@ Every physical log line contains the configured prefix, one ASCII space, and one
 ## `tree_felled`
 
 `tree_type`, `tree_display_name`, `player_name`, `player_id`, `x`, `y`, `z`. Standing `TreeBase` prefabs and destroyed tree-growing `Plant` saplings qualify. `TreeLog` does not. Sapling events are delayed briefly so normal growth into a replacement `TreeBase` can be suppressed.
+
+## `player_connected`
+
+`player_name`, `player_id`, `x`, `y`, `z`. Emitted once an accepted peer has a live character ZDO, rather than when a preliminary socket first appears.
+
+## `player_disconnected`
+
+`player_name`, `player_id`, `session_duration_seconds`, `x`, `y`, `z`. Duration is a non-negative number measured from the emitted gameplay connection to graceful peer disconnection. Position is the last server-observed character position.
+
+## `player_died`
+
+`player_name`, `player_id`, `death_cause`, `x`, `y`, `z`, `biome`. `death_cause` is currently always `null`: Valheim retains the authoritative final-hit details on the owning client, so the plugin does not invent a cause.
+
+## `world_key_changed`
+
+| Property | Type | Meaning |
+|---|---|---|
+| `action` | string | `added`, `updated`, or `removed` |
+| `key` | string | Normalized global-key name |
+| `value` | string/null | New optional key value; null for removal or a valueless key |
+| `previous_value` | string/null | Prior optional value; null when absent/valueless |
+
+Startup baseline keys and identical value reassignments are not emitted. Runtime changes made through gameplay, administration, or another mod are all represented because vanilla state does not persist a change origin.
 
 ## `entity_count`
 
