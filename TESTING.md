@@ -40,3 +40,15 @@ dotnet test ValheimTelemetry.sln -c Release --no-build
 ## Boundaries
 
 Harmony patch binding, Unity prefab/component classification, ZDO replication ordering, and dedicated-server ownership behavior require the installed Valheim integration environment. They remain startup/manual integration tests. Unit tests should cover deterministic logic around those boundaries and must not attempt to boot Unity or mutate a world.
+
+## Mutation testing
+
+Stryker.NET 4.16.0 is pinned as a repository-local tool. The checked-in configuration mutates the deterministic core covered by unit tests; Unity/Harmony integration code remains under dedicated-server validation rather than producing misleading no-coverage mutants. It uses Stryker's Microsoft Testing Platform runner because the VSTest runner did not activate mutations with this xUnit v3 test assembly.
+
+```bash
+dotnet tool restore
+cd tests/ValheimTelemetry.Tests
+dotnet stryker
+```
+
+Generated `StrykerOutput` reports are intentionally excluded from Git.

@@ -1,0 +1,29 @@
+{
+  "stryker-config": {
+    "solution": "../../ValheimTelemetry.sln",
+    "project": "ValheimTelemetry.csproj",
+    "configuration": "Release",
+    "test-runner": "mtp",
+    "mutation-level": "Standard",
+    "concurrency": 1,
+    "reporters": [
+      "progress",
+      "cleartext",
+      "html",
+      "json"
+    ],
+    "mutate": [
+      "Telemetry/TelemetryEvent.cs",
+      "Telemetry/TelemetrySerializer.cs",
+      "Telemetry/TelemetrySink.cs",
+      "Tracking/BoundedSet.cs",
+      "Tracking/BoundedTimedCache.cs",
+      "Tracking/WorldStateTracker.cs"
+    ],
+    "thresholds": {
+      "high": 90,
+      "low": 75,
+      "break": 0
+    }
+  }
+}

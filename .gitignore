@@ -3,9 +3,9 @@ obj/
 artifacts/
 decompiled/
 references/
+StrykerOutput/
 *.user
 *.suo
 *.dll
 *.pdb
 !examples/*.cfg
-
