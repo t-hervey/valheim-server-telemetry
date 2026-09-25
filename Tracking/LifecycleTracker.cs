@@ -32,7 +32,7 @@ namespace ValheimTelemetry.Tracking
         private readonly Dictionary<ZDOID, float> _recentCreateTimes = new Dictionary<ZDOID, float>();
         private readonly Queue<RecentCreate> _recentCreateOrder = new Queue<RecentCreate>();
         private readonly BoundedEventCache _zeroHealth = new BoundedEventCache(16384);
-        private readonly BoundedTimedCache _recentDamage = new BoundedTimedCache(16384, 60f);
+        private readonly BoundedTimedCache<ZDOID> _recentDamage = new BoundedTimedCache<ZDOID>(16384, 60f, () => Time.realtimeSinceStartup);
 
         public LifecycleTracker(PluginConfig config, ITelemetrySink sink)
         {

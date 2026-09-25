@@ -1,32 +1,16 @@
-using System.Collections.Generic;
-
 namespace ValheimTelemetry.Tracking
 {
     internal sealed class BoundedEventCache
     {
-        private readonly int _capacity;
-        private readonly HashSet<ZDOID> _set = new HashSet<ZDOID>();
-        private readonly Queue<ZDOID> _order = new Queue<ZDOID>();
+        private readonly BoundedSet<ZDOID> _ids;
 
         public BoundedEventCache(int capacity)
         {
-            _capacity = capacity;
+            _ids = new BoundedSet<ZDOID>(capacity);
         }
 
-        public bool Add(ZDOID id)
-        {
-            if (!_set.Add(id))
-            {
-                return false;
-            }
-            _order.Enqueue(id);
-            while (_order.Count > _capacity)
-            {
-                _set.Remove(_order.Dequeue());
-            }
-            return true;
-        }
+        public bool Add(ZDOID id) => _ids.Add(id);
 
-        public bool Contains(ZDOID id) => _set.Contains(id);
+        public bool Contains(ZDOID id) => _ids.Contains(id);
     }
 }

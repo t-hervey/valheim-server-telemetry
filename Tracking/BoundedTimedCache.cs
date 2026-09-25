@@ -1,38 +1,42 @@
+using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace ValheimTelemetry.Tracking
 {
-    internal sealed class BoundedTimedCache
+    internal sealed class BoundedTimedCache<T>
     {
         private sealed class Entry
         {
-            public ZDOID Id;
+            public T Id;
             public float Time;
         }
 
         private readonly int _capacity;
         private readonly float _retentionSeconds;
-        private readonly Dictionary<ZDOID, float> _times = new Dictionary<ZDOID, float>();
+        private readonly Func<float> _clock;
+        private readonly Dictionary<T, float> _times = new Dictionary<T, float>();
         private readonly Queue<Entry> _order = new Queue<Entry>();
 
-        public BoundedTimedCache(int capacity, float retentionSeconds)
+        public BoundedTimedCache(int capacity, float retentionSeconds, Func<float> clock)
         {
+            if (capacity <= 0) throw new ArgumentOutOfRangeException(nameof(capacity));
+            if (retentionSeconds < 0f) throw new ArgumentOutOfRangeException(nameof(retentionSeconds));
             _capacity = capacity;
             _retentionSeconds = retentionSeconds;
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
-        public void Touch(ZDOID id)
+        public void Touch(T id)
         {
-            float now = Time.realtimeSinceStartup;
+            float now = _clock();
             _times[id] = now;
             _order.Enqueue(new Entry { Id = id, Time = now });
             Trim(now);
         }
 
-        public bool ContainsRecent(ZDOID id, float maximumAgeSeconds)
+        public bool ContainsRecent(T id, float maximumAgeSeconds)
         {
-            float now = Time.realtimeSinceStartup;
+            float now = _clock();
             Trim(now);
             return _times.TryGetValue(id, out float time) && now - time <= maximumAgeSeconds;
         }
