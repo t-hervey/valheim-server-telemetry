@@ -57,6 +57,7 @@ namespace ValheimTelemetry.Tracking
         public void Tick(float now)
         {
             TrimRecentCreates(now);
+            _trees.Tick(now);
             int available = _pending.Count;
             for (int i = 0; i < available; i++)
             {
@@ -76,6 +77,7 @@ namespace ValheimTelemetry.Tracking
                     continue;
                 }
                 if (info == null) continue;
+                if (info.IsTreeBase) _trees.StandingTreeCreated(zdo.GetPosition(), now);
                 _mobs.Spawned(zdo, info);
                 _portals.Built(zdo, info);
                 _ships.Built(zdo, info);
@@ -91,6 +93,10 @@ namespace ValheimTelemetry.Tracking
             if (info.IsTreeBase)
             {
                 _trees.Felled(zdo, info);
+            }
+            else if (info.IsTreeSapling)
+            {
+                _trees.SaplingDestroyed(zdo, info);
             }
             else if (info.IsMob && IsProbableMobDeath(zdo))
             {

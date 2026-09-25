@@ -9,11 +9,13 @@ namespace ValheimTelemetry.Util
         public string DisplayName;
         public Character Character;
         public Piece Piece;
+        public Plant Plant;
         public bool IsPlayer;
         public bool IsMob;
         public bool IsPortal;
         public bool IsShip;
         public bool IsTreeBase;
+        public bool IsTreeSapling;
         public bool IsPiece;
     }
 
@@ -34,6 +36,7 @@ namespace ValheimTelemetry.Util
 
             Character character = prefab.GetComponent<Character>();
             Piece piece = prefab.GetComponent<Piece>();
+            Plant plant = prefab.GetComponent<Plant>();
             bool isPlayer = prefab.GetComponent<Player>() != null;
             PrefabInfo result = new PrefabInfo
             {
@@ -41,14 +44,16 @@ namespace ValheimTelemetry.Util
                 Type = NormalizeName(prefab.name),
                 Character = character,
                 Piece = piece,
+                Plant = plant,
                 IsPlayer = isPlayer,
                 IsMob = character != null && !isPlayer,
                 IsPortal = prefab.GetComponent<TeleportWorld>() != null,
                 IsShip = prefab.GetComponent<Ship>() != null,
                 IsTreeBase = prefab.GetComponent<TreeBase>() != null,
+                IsTreeSapling = IsTreeSapling(plant),
                 IsPiece = piece != null
             };
-            result.DisplayName = Localize(character != null ? character.m_name : piece != null ? piece.m_name : result.Type);
+            result.DisplayName = Localize(character != null ? character.m_name : piece != null ? piece.m_name : plant != null ? plant.m_name : result.Type);
             return result;
         }
 
@@ -77,6 +82,23 @@ namespace ValheimTelemetry.Util
                 return value.Substring(0, value.Length - clone.Length);
             }
             return value;
+        }
+
+        private static bool IsTreeSapling(Plant plant)
+        {
+            if (plant == null || plant.m_grownPrefabs == null)
+            {
+                return false;
+            }
+            for (int i = 0; i < plant.m_grownPrefabs.Length; i++)
+            {
+                GameObject grown = plant.m_grownPrefabs[i];
+                if (grown != null && grown.GetComponent<TreeBase>() != null)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private static string Localize(string value)

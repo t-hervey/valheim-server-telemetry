@@ -18,7 +18,7 @@ This analysis is based on the installed `assembly_valheim.dll` from Valheim `l-1
 | `loaded_ship` | ready peers' near sectors | Yes | **LOADED_ENTITIES_ONLY** |
 | `creature_tamed` | existing Character ZDO `tamed` false-to-true transition | Usually | **HIGH_CONFIDENCE**; method is **INFERRED** |
 | `active_tamed_creature` | tamed Character ZDOs in ready peers' near sectors | Yes | **LOADED_ENTITIES_ONLY** |
-| `tree_felled` | destruction of a standing `TreeBase` ZDO; `TreeLog` is excluded | Yes | **HIGH_CONFIDENCE** |
+| `tree_felled` | destruction of a standing `TreeBase`, or a tree-growing `Plant` without a nearby grown replacement; `TreeLog` is excluded | Yes | **HIGH_CONFIDENCE** |
 | persistent world totals | complete chunk store, safely and cheaply classified | Not as a supported runtime metric | **UNAVAILABLE_SERVER_ONLY** |
 
 ## Why ZDO lifecycle is used
@@ -59,7 +59,7 @@ Runtime components classify the actual prefab, avoiding hard-coded name lists. `
 
 ### Trees
 
-A standing tree prefab has `TreeBase`; lethal damage spawns the fallen log/stub and destroys the standing-tree ZDO. Because the client can send that destruction before the terminal health revision, destruction of a `TreeBase` is the event signal. The resulting log has `TreeLog`, so later log chopping cannot generate `tree_felled`. Admin/mod deletion of a standing tree can look like felling.
+A standing tree prefab has `TreeBase`; lethal damage spawns the fallen log/stub and destroys the standing-tree ZDO. Because the client can send that destruction before the terminal health revision, destruction of a `TreeBase` is the event signal. A sapling uses `Plant` plus `Destructible`; tree saplings are identified without a name list by a grown prefab containing `TreeBase`. Natural growth also destroys the sapling, so the event is delayed three seconds and suppressed when a newly created standing tree appears at the same position. The resulting log has `TreeLog`, so later log chopping cannot generate `tree_felled`. Admin/mod deletion of a standing tree, or an unhealthy tree sapling that self-destructs without growing, can look like felling.
 
 ### Snapshots
 

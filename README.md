@@ -92,9 +92,11 @@ Use an unmodified Valheim 1.0 client. For quicker snapshot testing, temporarily 
 9. Tame an animal; expect one `creature_tamed`, method `player_tamed`, with null player identity.
 10. Breed a tamed animal; expect a `mob_spawned` with `spawn_source: "breeding"`, but no `creature_tamed`.
 11. Fell one standing tree; expect one `tree_felled`.
-12. Chop the resulting `TreeLog`; expect no additional `tree_felled`.
-13. Wait for a snapshot with the client connected; expect `entity_count` lines grouped by runtime type.
-14. Restart again; expect no false lifecycle events from the existing objects. Snapshot events are allowed.
+12. Destroy a planted tree sapling; expect one `tree_felled` after a short growth-disambiguation delay.
+13. Let a tree sapling grow naturally; expect no `tree_felled` for the replaced sapling ZDO.
+14. Chop the resulting `TreeLog`; expect no additional `tree_felled`.
+15. Wait for a snapshot with the client connected; expect `entity_count` lines grouped by runtime type.
+16. Restart again; expect no false lifecycle events from the existing objects. Snapshot events are allowed.
 
 ## Known limitations
 
@@ -105,6 +107,7 @@ Use an unmodified Valheim 1.0 client. For quicker snapshot testing, temporarily 
 - Hammer removal does not reliably identify the remover. Destroy events are still correct, but attribution is normally null.
 - A very tightly timed DOT/environmental death following a server-visible direct player hit could retain the recent-hit identity for up to 0.75 seconds; this is the principal remaining false-attribution edge case to test.
 - Admin commands or another mod that directly flips `tamed` from false to true can look like normal taming.
+- Tree saplings are identified at runtime as `Plant` prefabs whose grown prefab has `TreeBase`. Their destruction is delayed three seconds and suppressed if a grown replacement tree appears nearby. An unhealthy sapling that self-destructs without producing a tree can still look like player destruction because vanilla persists no destruction cause.
 - Snapshot definitions are active/loaded scope, never persistent-world totals.
 
 Detailed hook evidence and classifications are in [OBSERVABILITY.md](OBSERVABILITY.md); the complete schema is in [EVENT_SCHEMA.md](EVENT_SCHEMA.md).

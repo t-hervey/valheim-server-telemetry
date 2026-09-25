@@ -44,7 +44,7 @@ Every physical log line contains the configured prefix, one ASCII space, and one
 
 ## `tree_felled`
 
-`tree_type`, `tree_display_name`, `player_name`, `player_id`, `x`, `y`, `z`. Only a prefab with `TreeBase` qualifies. `TreeLog` does not.
+`tree_type`, `tree_display_name`, `player_name`, `player_id`, `x`, `y`, `z`. Standing `TreeBase` prefabs and destroyed tree-growing `Plant` saplings qualify. `TreeLog` does not. Sapling events are delayed briefly so normal growth into a replacement `TreeBase` can be suppressed.
 
 ## `entity_count`
 
