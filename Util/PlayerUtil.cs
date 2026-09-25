@@ -49,9 +49,24 @@ namespace ValheimTelemetry.Util
             }
             foreach (ZNetPeer peer in ZNet.instance.GetPeers())
             {
-                if (peer.IsReady() && peer.m_playerID == creator)
+                if (!peer.IsReady())
                 {
-                    return new PlayerIdentity { Id = peer.m_playerID, Name = peer.m_playerName };
+                    continue;
+                }
+
+                long peerPlayerId = peer.m_playerID;
+                if (!peer.m_characterID.IsNone() && ZDOMan.instance != null)
+                {
+                    ZDO character = ZDOMan.instance.GetZDO(peer.m_characterID);
+                    if (character != null)
+                    {
+                        peerPlayerId = character.GetLong(ZDOVars.s_playerID, peerPlayerId);
+                    }
+                }
+
+                if (peerPlayerId == creator)
+                {
+                    return new PlayerIdentity { Id = creator, Name = peer.m_playerName };
                 }
             }
             return new PlayerIdentity { Id = creator, Name = null };
