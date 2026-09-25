@@ -41,6 +41,96 @@ dotnet test ValheimTelemetry.sln -c Release
 
 The phased testing strategy, conventions, package choices, and integration-test boundaries are recorded in [TESTING.md](TESTING.md).
 
+## Installation and upgrades
+
+### Runtime dependencies
+
+The server must already have:
+
+- a Valheim dedicated server compatible with Valheim 1.0;
+- BepInEx 5 for Unix x64 (tested with `5.4.23.5`); and
+- HarmonyX/`0Harmony.dll`, which is included in a normal BepInEx 5 installation.
+
+The release contains only `ValheimTelemetry.dll`. Do not copy Valheim, Unity, BepInEx, or Harmony assemblies from the build machine. Jotunn and a .NET SDK are not runtime dependencies. Nothing is installed on clients, and an unmodified Valheim client can connect normally.
+
+If BepInEx is not installed yet, obtain the current BepInEx 5 Unix x64 release from the [official BepInEx releases](https://github.com/BepInEx/BepInEx/releases), extract it into the Valheim server root, and start the server through BepInEx's `run_bepinex.sh` once. Preserve all of the server's existing Valheim launch arguments. Before continuing, verify that these files exist (paths are relative to the server root):
+
+```text
+BepInEx/core/BepInEx.dll
+BepInEx/core/0Harmony.dll
+run_bepinex.sh
+```
+
+Also verify that `BepInEx/LogOutput.log` reports a successful chainloader startup. Service-manager configuration varies by installation; a systemd service must invoke `run_bepinex.sh`, directly or through a launch script, rather than bypassing BepInEx and starting `valheim_server.x86_64` by itself.
+
+### First installation
+
+1. Download `ValheimTelemetry.dll` from the [latest GitHub release](https://github.com/t-hervey/valheim-server-telemetry/releases/latest). The ZIP contains the same DLL plus documentation and an example configuration. Authenticated GitHub CLI users can instead download the DLL with:
+
+   ```bash
+   download_dir="$(mktemp -d)"
+   gh release download \
+     --repo t-hervey/valheim-server-telemetry \
+     --pattern 'ValheimTelemetry.dll' \
+     --dir "$download_dir"
+   ```
+
+2. Stop the dedicated-server service. Substitute the actual service name and server root for the examples below:
+
+   ```bash
+   sudo systemctl stop valheim.service
+   ```
+
+3. Install the DLL with the same owner and group as the server process. This example uses the paths and account from the development clone:
+
+   ```bash
+   sudo install -o steam -g steam -m 0644 \
+     "$download_dir/ValheimTelemetry.dll" \
+     /home/steam/valheim_server/BepInEx/plugins/ValheimTelemetry.dll
+   ```
+
+4. Start the service and verify both the BepInEx load message and telemetry initialization:
+
+   ```bash
+   sudo systemctl start valheim.service
+   sudo journalctl -u valheim.service -n 200 --no-pager \
+     | grep -E 'BepInEx|ValheimTelemetry|VALHEIM_TELEMETRY|Exception|MissingMethod|TypeLoad|FileNotFound'
+   ```
+
+5. On first load, BepInEx creates `BepInEx/config/dev.deepnorth.valheimtelemetry.cfg`. Stop the service before editing it, compare it with [the example configuration](examples/dev.deepnorth.valheimtelemetry.cfg), then start the service again. The default configuration is usable without edits.
+
+Successful installation shows `Loading ValheimTelemetry <version>` followed by the plugin's initialization and arming messages. A normal startup should not contain a Harmony patch failure, `MissingMethodException`, `TypeLoadException`, or plugin-related `FileNotFoundException`.
+
+### Updating to a new release
+
+Read the new release notes and [feature inventory](FEATURES.md) first, especially when an event schema or configuration setting changes. Upgrading the DLL does not overwrite the existing BepInEx configuration.
+
+1. Download the new release DLL into a temporary directory using the release page or the `gh release download` command above.
+2. Stop the server and preserve the currently working DLL and configuration:
+
+   ```bash
+   sudo systemctl stop valheim.service
+   backup_dir="/home/steam/valheim_server/BepInEx/backups/ValheimTelemetry-$(date -u +%Y%m%dT%H%M%SZ)"
+   sudo install -d -o steam -g steam -m 0755 "$backup_dir"
+   sudo cp -a /home/steam/valheim_server/BepInEx/plugins/ValheimTelemetry.dll "$backup_dir/"
+   sudo cp -a /home/steam/valheim_server/BepInEx/config/dev.deepnorth.valheimtelemetry.cfg "$backup_dir/"
+   ```
+
+3. Replace only the plugin DLL, start the server, and repeat the log verification from the installation procedure:
+
+   ```bash
+   sudo install -o steam -g steam -m 0644 \
+     "$download_dir/ValheimTelemetry.dll" \
+     /home/steam/valheim_server/BepInEx/plugins/ValheimTelemetry.dll
+   sudo systemctl start valheim.service
+   sudo journalctl -u valheim.service -n 200 --no-pager \
+     | grep -E 'BepInEx|ValheimTelemetry|VALHEIM_TELEMETRY|Exception|MissingMethod|TypeLoad|FileNotFound'
+   ```
+
+Confirm that the log reports the expected new version and that the server reaches its normal ready/listening state. Existing objects must not generate false lifecycle events after an update or restart; periodic loaded-entity snapshots are expected.
+
+To roll back, stop the service, install the backed-up DLL over `BepInEx/plugins/ValheimTelemetry.dll`, restore the matching configuration only if it was changed for the new version, and start the service. Keep only one copy of the plugin DLL anywhere under `BepInEx/plugins`; a second renamed DLL can cause BepInEx to load the plugin twice.
+
 ## Development-clone installation
 
 The verified plugin path is `/home/steam/valheim_server/BepInEx/plugins/ValheimTelemetry.dll` and the service is `valheim.service`.
