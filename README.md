@@ -172,6 +172,38 @@ For startup and snapshot diagnostics:
 sudo journalctl -u valheim.service -f --no-pager | grep --line-buffered -E 'ValheimTelemetry|VALHEIM_TELEMETRY'
 ```
 
+### Structured Alloy/Loki ingestion
+
+The BepInEx logger places its own prefix before `VALHEIM_TELEMETRY`, so the complete journal `MESSAGE` is not itself a JSON document. The example [Alloy configuration](examples/alloy-valheim-telemetry.alloy) extracts the telemetry object at ingestion time and:
+
+- stores the visible Loki log body as pure JSON;
+- adds the bounded `vh_event`, `vh_world`, and `vh_category` Loki labels; and
+- attaches entity, player, prefab, position, and event-specific properties as Loki structured metadata.
+
+Keep high-cardinality values such as player identity, coordinates, portal tags, and display names out of indexed labels. The structured-metadata stage requires Loki's TSDB index with schema `v13` or newer and `limits_config.allow_structured_metadata: true`. Grafana Cloud supports structured metadata by default. If the destination does not support it, remove the `stage.structured_metadata` block; the stored pure-JSON line remains queryable with `| json`.
+
+The example is a complete starting configuration, not a drop-in replacement for an installation that already has other Alloy pipelines. Set its Loki endpoint, credentials, TLS policy, host label, and password-file path for the target system. When merging it into an existing configuration, route the existing Valheim journal source to `loki.process.valheim_telemetry.receiver`, retain the existing writer, and avoid forwarding the same source directly to both the processor and writer because that duplicates every log.
+
+Validate before restarting Alloy:
+
+```bash
+sudo alloy validate /etc/alloy/config.alloy
+sudo systemctl restart alloy.service
+sudo journalctl -u alloy.service -n 100 --no-pager
+```
+
+New entries can then be queried without reparsing the BepInEx prefix:
+
+```logql
+{vh_event="mob_killed"} | mob_type="Neck"
+```
+
+```logql
+{vh_event="entity_count", vh_category="active_mob"} | entity_type="Greydwarf"
+```
+
+This transformation applies only to entries Alloy ingests after the configuration change; it does not rewrite data already stored in Loki.
+
 ## Loaded versus world totals
 
 Valheim 1.0 stores the world in persistent ZDO chunks, but only areas near connected peers are actively simulated. Snapshot collection unions and de-duplicates the ready peers' near simulation sectors. It therefore emits `active_mob`, `active_tamed_creature`, `loaded_piece`, `loaded_portal`, and `loaded_ship`. These are not world totals. A reliable, inexpensive world-total classification is not available to this passive plugin and no metric is labeled as one.

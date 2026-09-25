@@ -1,0 +1,156 @@
+local.file "loki_password" {
+	filename = "/etc/alloy/secrets/loki_password"
+}
+
+loki.source.journal "valheim" {
+	matches = "_SYSTEMD_UNIT=valheim.service"
+
+	// Only backfill a small amount while we're testing.
+	max_age = "2h"
+
+	labels = {
+		host    = "valheim-server",
+		service = "valheim",
+	}
+
+	forward_to = [loki.process.valheim_telemetry.receiver]
+}
+
+// Convert ValheimTelemetry's BepInEx-prefixed log messages into pure JSON and
+// attach useful fields before forwarding them to Loki. Non-telemetry Valheim
+// messages pass through unchanged.
+loki.process "valheim_telemetry" {
+	stage.match {
+		selector = "{service=\"valheim\"} |= \"VALHEIM_TELEMETRY \""
+
+		stage.regex {
+			expression = `.*VALHEIM_TELEMETRY (?P<telemetry>\{.*\})$`
+		}
+
+		stage.json {
+			source = "telemetry"
+
+			expressions = {
+				schema_version           = "",
+				event                    = "",
+				timestamp                = "",
+				world                    = "",
+				category                 = "",
+				mob_type                 = "",
+				mob_display_name         = "",
+				mob_level                = "",
+				mob_stars                = "",
+				spawn_source             = "",
+				boss_type                = "",
+				boss_display_name        = "",
+				boss_level               = "",
+				boss_stars               = "",
+				creature_type            = "",
+				creature_display_name    = "",
+				creature_level           = "",
+				creature_stars           = "",
+				tame_method              = "",
+				piece_type               = "",
+				piece_display_name       = "",
+				portal_type              = "",
+				portal_tag               = "",
+				old_portal_tag           = "",
+				ship_type                = "",
+				ship_display_name        = "",
+				tree_type                = "",
+				tree_display_name        = "",
+				entity_type              = "",
+				count                    = "",
+				biome                    = "",
+				player_name              = "",
+				player_id                = "",
+				session_duration_seconds = "",
+				death_cause              = "",
+				action                   = "",
+				key                      = "",
+				value                    = "",
+				previous_value           = "",
+				x                        = "",
+				y                        = "",
+				z                        = "",
+			}
+		}
+
+		// These dimensions are intentionally bounded and useful in most queries.
+		stage.labels {
+			values = {
+				vh_event    = "event",
+				vh_world    = "world",
+				vh_category = "category",
+			}
+		}
+
+		// Keep entity and player data filterable without creating high-cardinality
+		// indexed Loki streams.
+		stage.structured_metadata {
+			values = {
+				schema_version           = "",
+				timestamp                = "",
+				mob_type                 = "",
+				mob_display_name         = "",
+				mob_level                = "",
+				mob_stars                = "",
+				spawn_source             = "",
+				boss_type                = "",
+				boss_display_name        = "",
+				boss_level               = "",
+				boss_stars               = "",
+				creature_type            = "",
+				creature_display_name    = "",
+				creature_level           = "",
+				creature_stars           = "",
+				tame_method              = "",
+				piece_type               = "",
+				piece_display_name       = "",
+				portal_type              = "",
+				portal_tag               = "",
+				old_portal_tag           = "",
+				ship_type                = "",
+				ship_display_name        = "",
+				tree_type                = "",
+				tree_display_name        = "",
+				entity_type              = "",
+				count                    = "",
+				biome                    = "",
+				player_name              = "",
+				player_id                = "",
+				session_duration_seconds = "",
+				death_cause              = "",
+				action                   = "",
+				key                      = "",
+				value                    = "",
+				previous_value           = "",
+				x                        = "",
+				y                        = "",
+				z                        = "",
+			}
+		}
+
+		// Loki stores a clean JSON log body rather than the BepInEx prefix.
+		stage.output {
+			source = "telemetry"
+		}
+	}
+
+	forward_to = [loki.write.central.receiver]
+}
+
+loki.write "central" {
+	endpoint {
+		url = "https://loki.example.invalid/loki/api/v1/push"
+
+		basic_auth {
+			username = "alloy"
+			password = local.file.loki_password.content
+		}
+
+		tls_config {
+			insecure_skip_verify = true
+		}
+	}
+}
