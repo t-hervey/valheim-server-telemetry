@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>ValheimTelemetry</AssemblyName>
+    <RootNamespace>ValheimTelemetry</RootNamespace>
+    <Version>1.0.0</Version>
+    <Deterministic>true</Deterministic>
+    <DebugType>portable</DebugType>
+    <LocalReferenceDir Condition="'$(LocalReferenceDir)' == '' and Exists('../references/assembly_valheim.dll')">../references</LocalReferenceDir>
+    <ValheimServerDir Condition="'$(ValheimServerDir)' == ''">/home/steam/valheim_server</ValheimServerDir>
+    <ValheimManagedDir Condition="'$(ValheimManagedDir)' == ''">$(ValheimServerDir)/valheim_server_Data/Managed</ValheimManagedDir>
+    <BepInExDir Condition="'$(BepInExDir)' == ''">$(ValheimServerDir)/BepInEx</BepInExDir>
+    <ValheimManagedDir Condition="'$(LocalReferenceDir)' != ''">$(LocalReferenceDir)</ValheimManagedDir>
+    <BepInExCoreDir Condition="'$(LocalReferenceDir)' != ''">$(LocalReferenceDir)</BepInExCoreDir>
+    <BepInExCoreDir Condition="'$(BepInExCoreDir)' == ''">$(BepInExDir)/core</BepInExCoreDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="BepInEx">
+      <HintPath>$(BepInExCoreDir)/BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(BepInExCoreDir)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="assembly_valheim">
+      <HintPath>$(ValheimManagedDir)/assembly_valheim.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="assembly_utils">
+      <HintPath>$(ValheimManagedDir)/assembly_utils.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="assembly_guiutils">
+      <HintPath>$(ValheimManagedDir)/assembly_guiutils.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ValheimManagedDir)/Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(ValheimManagedDir)/UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(ValheimManagedDir)/UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,11 @@
+bin/
+obj/
+artifacts/
+decompiled/
+references/
+*.user
+*.suo
+*.dll
+*.pdb
+!examples/*.cfg
+
