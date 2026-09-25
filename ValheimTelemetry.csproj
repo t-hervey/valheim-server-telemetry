@@ -6,7 +6,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>ValheimTelemetry</AssemblyName>
     <RootNamespace>ValheimTelemetry</RootNamespace>
-    <Version>1.0.2</Version>
+    <Version>1.1.0</Version>
     <Deterministic>true</Deterministic>
     <DebugType>portable</DebugType>
     <LocalReferenceDir Condition="'$(LocalReferenceDir)' == '' and Exists('../references/assembly_valheim.dll')">../references</LocalReferenceDir>
@@ -41,6 +41,10 @@
     </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>$(ValheimManagedDir)/Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Splatform">
+      <HintPath>$(ValheimManagedDir)/Splatform.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine">

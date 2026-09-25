@@ -29,6 +29,21 @@ namespace ValheimTelemetry.Tracking
             Emit("portal_destroyed", zdo, info, _hits.Resolve(zdo.m_uid, 0.75f));
         }
 
+        public void TagChanged(ZDO zdo, PrefabInfo info, string oldTag)
+        {
+            if (!_config.PortalTagChanges || zdo == null || info == null || !info.IsPortal) return;
+            string newTag = zdo.GetString(ZDOVars.s_tag, string.Empty);
+            if (string.Equals(oldTag ?? string.Empty, newTag, System.StringComparison.Ordinal)) return;
+            string author = zdo.GetString(ZDOVars.s_tagauthor, null);
+            var telemetryEvent = new TelemetryEvent()
+                .Add("portal_type", info.Type)
+                .Add("old_portal_tag", oldTag ?? string.Empty)
+                .Add("portal_tag", newTag);
+            PlayerUtil.Add(telemetryEvent, PlayerUtil.FromPlatformAuthor(author), _config);
+            ZdoUtil.AddPosition(telemetryEvent, zdo.GetPosition(), _config);
+            _sink.Emit("portal_tag_changed", telemetryEvent);
+        }
+
         private static bool Qualifies(ZDO zdo, PrefabInfo info) => info != null && info.IsPortal && zdo.GetLong(ZDOVars.s_creator, 0L) != 0L;
 
         private void Emit(string name, ZDO zdo, PrefabInfo info, PlayerIdentity player)

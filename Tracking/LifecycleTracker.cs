@@ -130,6 +130,12 @@ namespace ValheimTelemetry.Tracking
             _tames.Tamed(zdo, PrefabUtil.Describe(zdo));
         }
 
+        public void PortalTagChanged(ZDO zdo, string oldTag)
+        {
+            if (zdo == null || IsRecentlyCreated(zdo.m_uid, 5f)) return;
+            _portals.TagChanged(zdo, PrefabUtil.Describe(zdo), oldTag);
+        }
+
         public void RoutedDamage(ZDOID target, HitData hit) => _hits.Record(target, hit);
 
         private bool IsProbableMobDeath(ZDO zdo)

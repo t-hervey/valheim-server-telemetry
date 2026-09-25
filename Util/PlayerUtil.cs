@@ -72,6 +72,41 @@ namespace ValheimTelemetry.Util
             return new PlayerIdentity { Id = creator, Name = null };
         }
 
+        public static PlayerIdentity FromPeer(ZNetPeer peer)
+        {
+            if (peer == null || !peer.IsReady())
+            {
+                return null;
+            }
+            if (!peer.m_characterID.IsNone())
+            {
+                PlayerIdentity character = FromCharacter(peer.m_characterID);
+                if (character != null)
+                {
+                    return character;
+                }
+            }
+            return new PlayerIdentity { Id = peer.m_playerID, Name = peer.m_playerName };
+        }
+
+        public static PlayerIdentity FromPlatformAuthor(string authorId)
+        {
+            if (string.IsNullOrEmpty(authorId) || ZNet.instance == null)
+            {
+                return null;
+            }
+            foreach (ZNet.PlayerInfo player in ZNet.instance.GetPlayerList())
+            {
+                string platformId = player.m_userInfo.m_id.ToString();
+                if (string.Equals(platformId, authorId, System.StringComparison.Ordinal))
+                {
+                    PlayerIdentity identity = FromCharacter(player.m_characterID);
+                    return identity ?? new PlayerIdentity { Id = 0L, Name = player.m_name };
+                }
+            }
+            return null;
+        }
+
         public static TelemetryEvent Add(TelemetryEvent telemetryEvent, PlayerIdentity identity, PluginConfig config)
         {
             telemetryEvent.Add("player_name", config.IncludePlayerName && !string.IsNullOrEmpty(identity?.Name) ? identity.Name : null);

@@ -36,6 +36,8 @@ namespace ValheimTelemetry.Patches
             public bool HadHealth;
             public float Health;
             public bool Tamed;
+            public bool Dead;
+            public string PortalTag;
         }
 
         private static void Prefix(ZDO __instance, out State __state)
@@ -45,6 +47,8 @@ namespace ValheimTelemetry.Patches
             {
                 __state.HadHealth = __instance.GetFloat(ZDOVars.s_health, out __state.Health);
                 __state.Tamed = __instance.GetBool(ZDOVars.s_tamed, false);
+                __state.Dead = __instance.GetBool(ZDOVars.s_dead, false);
+                __state.PortalTag = __instance.GetString(ZDOVars.s_tag, string.Empty);
             }
             catch (Exception ex)
             {
@@ -59,6 +63,8 @@ namespace ValheimTelemetry.Patches
                 if (__state == null) return;
                 Plugin.Runtime?.HealthChanged(__instance, __state.HadHealth, __state.Health);
                 Plugin.Runtime?.TamedChanged(__instance, __state.Tamed);
+                Plugin.Runtime?.PlayerDeadChanged(__instance, __state.Dead);
+                Plugin.Runtime?.PortalTagChanged(__instance, __state.PortalTag);
             }
             catch (Exception ex) { Plugin.Log?.LogError("ValheimTelemetry ZDO deserialize observation failed safely: " + ex); }
         }
@@ -101,15 +107,21 @@ namespace ValheimTelemetry.Patches
         {
             public bool Observe;
             public bool Tamed;
+            public bool Dead;
+            public bool ObserveDead;
         }
 
         private static MethodBase TargetMethod() => AccessTools.Method(typeof(ZDO), nameof(ZDO.Set), new[] { typeof(int), typeof(int), typeof(bool) });
 
         private static void Prefix(ZDO __instance, int hash, out State __state)
         {
-            __state = new State { Observe = hash == ZDOVars.s_tamed };
-            if (!__state.Observe) return;
-            try { __state.Tamed = __instance.GetBool(hash, false); }
+            __state = new State { Observe = hash == ZDOVars.s_tamed, ObserveDead = hash == ZDOVars.s_dead };
+            if (!__state.Observe && !__state.ObserveDead) return;
+            try
+            {
+                if (__state.Observe) __state.Tamed = __instance.GetBool(hash, false);
+                if (__state.ObserveDead) __state.Dead = __instance.GetBool(hash, false);
+            }
             catch (Exception ex) { Plugin.Log?.LogError("ValheimTelemetry tame pre-set observation failed safely: " + ex); }
         }
 
@@ -118,8 +130,38 @@ namespace ValheimTelemetry.Patches
             try
             {
                 if (__state != null && __state.Observe) Plugin.Runtime?.TamedChanged(__instance, __state.Tamed);
+                if (__state != null && __state.ObserveDead) Plugin.Runtime?.PlayerDeadChanged(__instance, __state.Dead);
             }
             catch (Exception ex) { Plugin.Log?.LogError("ValheimTelemetry tame observation failed safely: " + ex); }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class ZdoStringSetPatch
+    {
+        internal sealed class State
+        {
+            public bool Observe;
+            public string Value;
+        }
+
+        private static MethodBase TargetMethod() => AccessTools.Method(typeof(ZDO), nameof(ZDO.Set), new[] { typeof(int), typeof(string) });
+
+        private static void Prefix(ZDO __instance, int hash, out State __state)
+        {
+            __state = new State { Observe = hash == ZDOVars.s_tag };
+            if (!__state.Observe) return;
+            try { __state.Value = __instance.GetString(hash, string.Empty); }
+            catch (Exception ex) { Plugin.Log?.LogError("ValheimTelemetry portal-tag pre-set observation failed safely: " + ex); }
+        }
+
+        private static void Postfix(ZDO __instance, State __state)
+        {
+            try
+            {
+                if (__state != null && __state.Observe) Plugin.Runtime?.PortalTagChanged(__instance, __state.Value);
+            }
+            catch (Exception ex) { Plugin.Log?.LogError("ValheimTelemetry portal-tag observation failed safely: " + ex); }
         }
     }
 }

@@ -8,6 +8,7 @@ namespace ValheimTelemetry.Patches
     internal static class RoutedDamagePatch
     {
         private static readonly int DamageHash = "RPC_Damage".GetStableHashCode();
+        private static readonly int PlayerDeathHash = "OnDeath".GetStableHashCode();
 
         private static MethodBase TargetMethod() => AccessTools.Method(typeof(ZRoutedRpc), "RPC_RoutedRPC", new[] { typeof(ZRpc), typeof(ZPackage) });
 
@@ -21,7 +22,13 @@ namespace ValheimTelemetry.Patches
                 copy.SetPos(position);
                 var data = new ZRoutedRpc.RoutedRPCData();
                 data.Deserialize(copy);
-                if (data.m_methodHash != DamageHash || data.m_targetZDO.IsNone()) return;
+                if (data.m_targetZDO.IsNone()) return;
+                if (data.m_methodHash == PlayerDeathHash)
+                {
+                    Plugin.Runtime.PlayerDied(data.m_targetZDO);
+                    return;
+                }
+                if (data.m_methodHash != DamageHash) return;
                 ZPackage parameters = new ZPackage(data.m_parameters.GetArray());
                 parameters.SetPos(0);
                 var hit = new HitData();

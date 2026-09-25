@@ -17,6 +17,12 @@ namespace ValheimTelemetry.Config
         public bool Ships { get; private set; }
         public bool Taming { get; private set; }
         public bool Trees { get; private set; }
+        public bool PlayerSessions { get; private set; }
+        public bool PlayerDeaths { get; private set; }
+        public bool PortalTagChanges { get; private set; }
+        public bool TamedCreatureDeaths { get; private set; }
+        public bool BossKills { get; private set; }
+        public bool WorldKeys { get; private set; }
 
         public bool SnapshotActiveMobs { get; private set; }
         public bool SnapshotPortals { get; private set; }
@@ -48,6 +54,12 @@ namespace ValheimTelemetry.Config
                 Ships = Bind(file, log, "Events", "Ships", true, "Emit ship create/destroy events."),
                 Taming = Bind(file, log, "Events", "Taming", true, "Emit existing-creature tame state transitions."),
                 Trees = Bind(file, log, "Events", "Trees", true, "Emit standing-tree felling events."),
+                PlayerSessions = Bind(file, log, "Events", "PlayerSessions", true, "Emit player gameplay-session connect/disconnect events."),
+                PlayerDeaths = Bind(file, log, "Events", "PlayerDeaths", true, "Emit server-visible player death events."),
+                PortalTagChanges = Bind(file, log, "Events", "PortalTagChanges", true, "Emit changes to existing portal tags."),
+                TamedCreatureDeaths = Bind(file, log, "Events", "TamedCreatureDeaths", true, "Emit deaths of tamed creatures."),
+                BossKills = Bind(file, log, "Events", "BossKills", true, "Emit boss death events."),
+                WorldKeys = Bind(file, log, "Events", "WorldKeys", true, "Emit server world-key additions, updates, and removals."),
 
                 SnapshotActiveMobs = Bind(file, log, "Snapshots", "ActiveMobs", true, "Count wild mobs in connected peers' active simulation areas."),
                 SnapshotPortals = Bind(file, log, "Snapshots", "Portals", true, "Count portals in connected peers' active simulation areas."),
@@ -85,4 +97,3 @@ namespace ValheimTelemetry.Config
         }
     }
 }
-

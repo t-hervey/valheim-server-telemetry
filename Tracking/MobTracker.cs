@@ -37,18 +37,45 @@ namespace ValheimTelemetry.Tracking
 
         public void Killed(ZDO zdo, PrefabInfo info)
         {
-            if (!_config.MobKills || info == null || !info.IsMob || !_killed.Add(zdo.m_uid))
+            if (info == null || !info.IsMob || (!_config.MobKills && !_config.TamedCreatureDeaths && !_config.BossKills) || !_killed.Add(zdo.m_uid))
             {
                 return;
             }
             PlayerIdentity player = _hits.Resolve(zdo.m_uid, 0.75f);
-            var telemetryEvent = new TelemetryEvent();
-            PlayerUtil.Add(telemetryEvent, player, _config);
-            telemetryEvent.Add("mob_type", info.Type).Add("mob_display_name", info.DisplayName);
-            ZdoUtil.AddLevel(telemetryEvent, zdo, "mob_");
-            ZdoUtil.AddPosition(telemetryEvent, zdo.GetPosition(), _config);
-            telemetryEvent.Add("biome", PrefabUtil.Biome(zdo.GetPosition()));
-            _sink.Emit("mob_killed", telemetryEvent);
+            if (_config.MobKills)
+            {
+                var telemetryEvent = new TelemetryEvent();
+                PlayerUtil.Add(telemetryEvent, player, _config);
+                telemetryEvent.Add("mob_type", info.Type).Add("mob_display_name", info.DisplayName);
+                ZdoUtil.AddLevel(telemetryEvent, zdo, "mob_");
+                ZdoUtil.AddPosition(telemetryEvent, zdo.GetPosition(), _config);
+                telemetryEvent.Add("biome", PrefabUtil.Biome(zdo.GetPosition()));
+                _sink.Emit("mob_killed", telemetryEvent);
+            }
+
+            if (_config.TamedCreatureDeaths && zdo.GetBool(ZDOVars.s_tamed, false))
+            {
+                var tamedEvent = new TelemetryEvent()
+                    .Add("creature_type", info.Type)
+                    .Add("creature_display_name", info.DisplayName);
+                ZdoUtil.AddLevel(tamedEvent, zdo, "creature_");
+                PlayerUtil.Add(tamedEvent, player, _config);
+                ZdoUtil.AddPosition(tamedEvent, zdo.GetPosition(), _config);
+                tamedEvent.Add("biome", PrefabUtil.Biome(zdo.GetPosition()));
+                _sink.Emit("tamed_creature_died", tamedEvent);
+            }
+
+            if (_config.BossKills && info.Character != null && info.Character.m_boss)
+            {
+                var bossEvent = new TelemetryEvent()
+                    .Add("boss_type", info.Type)
+                    .Add("boss_display_name", info.DisplayName);
+                ZdoUtil.AddLevel(bossEvent, zdo, "boss_");
+                PlayerUtil.Add(bossEvent, player, _config);
+                ZdoUtil.AddPosition(bossEvent, zdo.GetPosition(), _config);
+                bossEvent.Add("biome", PrefabUtil.Biome(zdo.GetPosition()));
+                _sink.Emit("boss_killed", bossEvent);
+            }
         }
 
         private static string DetermineSpawnSource(ZDO zdo, PrefabInfo info)
