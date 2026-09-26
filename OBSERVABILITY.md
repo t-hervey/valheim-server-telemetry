@@ -14,6 +14,7 @@ This analysis is based on the installed `assembly_valheim.dll` from Valheim `l-1
 | `portal_built` | new player-created ZDO whose prefab has `TeleportWorld` | Yes | **EXACT** |
 | `portal_destroyed` | `ZDOMan.HandleDestroyedZDO` for that portal ZDO | Yes | **EXACT** |
 | `portal_tag_changed` | replicated portal ZDO `tag` transition and `tagauthor` | Yes | **HIGH_CONFIDENCE** |
+| `portal_travel` | connected portal ZDO graph plus replicated player-position jump | Inferred | **HIGH_CONFIDENCE** |
 | `loaded_portal` | ready peers' near sectors | Yes | **LOADED_ENTITIES_ONLY** |
 | `piece_built` | new player-created ZDO whose prefab has `Piece`, excluding portal/ship | Yes | **EXACT** |
 | `piece_destroyed` | `HandleDestroyedZDO` for that piece ZDO | Yes | **EXACT** |
@@ -71,6 +72,10 @@ Runtime components classify the actual prefab, avoiding hard-coded name lists. `
 
 Portal renaming changes persistent `tag`; repeated identical values and the initial tag written during recent portal creation are suppressed. Vanilla also persists `tagauthor` as a platform user identifier. The plugin only assigns an actor when that identifier exactly matches a currently connected player and can then resolve the character profile ID. A tag change still emits with null identity when the author is unavailable.
 
+`TeleportWorldTrigger.OnTriggerEnter` explicitly acts only on `Player.m_localPlayer`, and `TeleportWorld.Teleport` calls `Player.TeleportTo` on that client. There is no dedicated portal-use RPC for the server to observe. The server does receive the client-owned player ZDO's resulting position. `portal_travel` therefore requires all of the following: a player was within 7.5 metres of a connected source portal, the next sampled server position arrived within five seconds and moved at least 12 metres, and the new position is within 7.5 metres of the source portal's actual connected ZDO target. Samples run twice per second; the persistent portal graph is refreshed every ten seconds.
+
+This is **HIGH_CONFIDENCE**, not exact. A non-portal teleport that happens to begin and end beside the two connected portals can be a false positive. Trips between connected portals less than 12 metres apart, trips whose position replication is delayed more than five seconds, very short visits that occur wholly between samples, and trips during the first portal-cache refresh after a new connection can be missed. A five-second per-player cooldown prevents repeated or immediate reverse-trip duplicates. Player state is discarded on disconnect and bounded to 64 entries.
+
 ### Taming
 
 `Tameable.TamingUpdate` is owner-only, but completion ultimately changes persistent `ZDOVars.s_tamed`. Only an existing ZDO's false-to-true transition emits `creature_tamed`. A newly created already-tamed ZDO is suppressed, so bred offspring are not falsely reported as having undergone player taming. Vanilla state does not persist the responsible player, so identity is null. Direct admin/mod state changes are indistinguishable and are a possible false positive.
@@ -87,6 +92,7 @@ The dedicated server should not use its own origin-based runtime GameObject set 
 
 - Created, killed, built, destroyed, tamed, felled, and player-death identities use bounded FIFO-backed `ZDOID` sets (4,096–16,384 entries).
 - Pending creations and recent-hit data are capped and expire.
+- Portal-trip player state is capped at 64 peers; its portal snapshot is replaced rather than accumulated.
 - Zone load/unload, GameObject recreation, network ownership transfer, and repeated synchronization do not create a new ZDO and therefore do not emit build/spawn events.
 - Health/tame transitions compare old and new values; repeated identical updates do not emit again.
 - All Harmony callbacks catch exceptions. They are observers only and never return false or modify arguments/state.

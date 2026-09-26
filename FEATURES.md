@@ -11,6 +11,7 @@ This is the canonical inventory of implemented and considered telemetry. Update 
 | `entity_count: active_mob` | Implemented | 1.0.0 | LOADED_ENTITIES_ONLY | Counts ready peers' active areas, not the persistent world. |
 | `portal_built` / `portal_destroyed` | Implemented | 1.0.0 | EXACT | Destruction actor is usually unavailable. |
 | `portal_tag_changed` | Implemented | 1.1.0 | HIGH_CONFIDENCE | Exact replicated tag transition; actor is identified only when tag-author platform ID matches a connected player. |
+| `portal_travel` | Implemented | 1.2.0 | HIGH_CONFIDENCE | Inferred only when a player moves abruptly from a portal to its actual connected ZDO target. Not a client-side trigger event. |
 | `entity_count: loaded_portal` | Implemented | 1.0.0 | LOADED_ENTITIES_ONLY | Not a world total. |
 | `piece_built` / `piece_destroyed` | Implemented | 1.0.0 | EXACT | v1.0.2 added connected-character lookup for build-time player names. |
 | `entity_count: loaded_piece` | Implemented | 1.0.0 | LOADED_ENTITIES_ONLY | Not a world total. |
@@ -35,7 +36,6 @@ This is the canonical inventory of implemented and considered telemetry. Update 
 | Player biome presence/transition | Deferred | LOADED_ENTITIES_ONLY | Periodic character-ZDO location can support presence, but an exact transition may be missed between samples. |
 | Building repair | Deferred | INFERRED | Repair intent/action is primarily client-side; replicated health increase may be caused by other mechanics. |
 | Structure damage | Deferred | HIGH_CONFIDENCE occurrence | Technically observable through health changes, but high volume and attacker attribution is usually unavailable. |
-| Portal travel | Deferred | INFERRED | A teleport can be inferred from position changes but a server-only observer cannot reliably distinguish all teleports from other movement. |
 | Chat messages / commands | Deferred | EXACT | Server-visible but privacy-sensitive and outside the current gameplay telemetry scope. |
 | Crafting and upgrades | Unavailable server-only | UNAVAILABLE_SERVER_ONLY | Inventory/crafting execution is client-side and no complete authoritative server event is persisted. |
 | Item pickups and inventory changes | Unavailable server-only | UNAVAILABLE_SERVER_ONLY | No complete passive server-side action stream. |
@@ -52,3 +52,4 @@ This is the canonical inventory of implemented and considered telemetry. Update 
 - **1.1.0** — added gameplay sessions, player deaths, tamed-creature deaths, boss kills, world-key changes, and portal tag changes.
 - **1.1.1** — added the automated unit-test project and deterministic cache/sink test seams; telemetry schema and event coverage are unchanged.
 - **1.1.2** — added reproducible Stryker mutation testing and strengthened boundary tests; telemetry schema and event coverage are unchanged.
+- **1.2.0** — added conservative server-side portal-travel inference and stable portal ZDO IDs for graphing.

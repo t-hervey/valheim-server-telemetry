@@ -34,11 +34,17 @@ Every physical log line contains the configured prefix, one ASCII space, and one
 
 ## `portal_built` and `portal_destroyed`
 
-`portal_type`, `portal_tag`, `player_name`, `player_id`, `x`, `y`, `z`. `portal_type` is the raw prefab identifier. At destruction, the player fields are commonly null.
+`portal_id`, `portal_type`, `portal_tag`, `player_name`, `player_id`, `x`, `y`, `z`. `portal_id` is the stable ZDOID string and `portal_type` is the raw prefab identifier. At destruction, the player fields are commonly null.
 
 ## `portal_tag_changed`
 
-`portal_type`, `old_portal_tag`, `portal_tag`, `player_name`, `player_id`, `x`, `y`, `z`. The actor fields are populated only when the replicated platform tag-author ID exactly matches a connected player. The initial tag associated with a newly built portal is included in `portal_built` and suppressed as a separate tag-change event.
+`portal_id`, `portal_type`, `old_portal_tag`, `portal_tag`, `player_name`, `player_id`, `x`, `y`, `z`. The actor fields are populated only when the replicated platform tag-author ID exactly matches a connected player. The initial tag associated with a newly built portal is included in `portal_built` and suppressed as a separate tag-change event.
+
+## `portal_travel`
+
+`player_name`, `player_id`, `from_portal_id`, `from_portal_type`, `from_portal_tag`, `from_x`, `from_y`, `from_z`, `from_biome`, `to_portal_id`, `to_portal_type`, `to_portal_tag`, `to_x`, `to_y`, `to_z`, `to_biome`, `detection_method`, `confidence`.
+
+`detection_method` is `server_position_jump` and `confidence` is `high_confidence`. The portal IDs are stable ZDOID strings; tags are mutable and need not be unique. Coordinates become null when position privacy is disabled. This is a conservative inference from replicated positions and the actual portal connection graph, not observation of the client-only portal trigger.
 
 ## `piece_built` and `piece_destroyed`
 

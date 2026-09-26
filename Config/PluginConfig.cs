@@ -20,6 +20,7 @@ namespace ValheimTelemetry.Config
         public bool PlayerSessions { get; private set; }
         public bool PlayerDeaths { get; private set; }
         public bool PortalTagChanges { get; private set; }
+        public bool PortalTrips { get; private set; }
         public bool TamedCreatureDeaths { get; private set; }
         public bool BossKills { get; private set; }
         public bool WorldKeys { get; private set; }
@@ -57,6 +58,7 @@ namespace ValheimTelemetry.Config
                 PlayerSessions = Bind(file, log, "Events", "PlayerSessions", true, "Emit player gameplay-session connect/disconnect events."),
                 PlayerDeaths = Bind(file, log, "Events", "PlayerDeaths", true, "Emit server-visible player death events."),
                 PortalTagChanges = Bind(file, log, "Events", "PortalTagChanges", true, "Emit changes to existing portal tags."),
+                PortalTrips = Bind(file, log, "Events", "PortalTrips", true, "Infer travel between connected portals from replicated server-side player positions."),
                 TamedCreatureDeaths = Bind(file, log, "Events", "TamedCreatureDeaths", true, "Emit deaths of tamed creatures."),
                 BossKills = Bind(file, log, "Events", "BossKills", true, "Emit boss death events."),
                 WorldKeys = Bind(file, log, "Events", "WorldKeys", true, "Emit server world-key additions, updates, and removals."),

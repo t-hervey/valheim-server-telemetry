@@ -36,6 +36,7 @@ namespace ValheimTelemetry.Tracking
             if (string.Equals(oldTag ?? string.Empty, newTag, System.StringComparison.Ordinal)) return;
             string author = zdo.GetString(ZDOVars.s_tagauthor, null);
             var telemetryEvent = new TelemetryEvent()
+                .Add("portal_id", zdo.m_uid.ToString())
                 .Add("portal_type", info.Type)
                 .Add("old_portal_tag", oldTag ?? string.Empty)
                 .Add("portal_tag", newTag);
@@ -49,6 +50,7 @@ namespace ValheimTelemetry.Tracking
         private void Emit(string name, ZDO zdo, PrefabInfo info, PlayerIdentity player)
         {
             var telemetryEvent = new TelemetryEvent()
+                .Add("portal_id", zdo.m_uid.ToString())
                 .Add("portal_type", info.Type)
                 .Add("portal_tag", zdo.GetString(ZDOVars.s_tag, string.Empty));
             PlayerUtil.Add(telemetryEvent, player, _config);

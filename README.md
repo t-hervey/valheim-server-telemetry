@@ -12,6 +12,7 @@ Harmony postfix/prefix observers watch the server's existing persistence and rou
 - replicated health and tame-state changes through `ZDO.Deserialize` and local `ZDO.Set` calls;
 - copies of vanilla routed `RPC_Damage` packages for conservative player attribution;
 - vanilla peer lifecycle, player-death RPC/state, portal-tag, and global-key transitions;
+- replicated player positions correlated with the persistent portal connection graph;
 - peer active simulation sectors for periodic loaded/active counts.
 
 Callbacks only copy or read data, catch their own exceptions, and never suppress a vanilla method. `ITelemetrySink` separates event tracking from output formatting. Lifecycle caches are bounded. A 20-second post-world-load grace means existing ZDOs establish a baseline without generating build, spawn, tame, or felling events.
@@ -148,7 +149,7 @@ Do not copy this development artifact to production as part of this workflow.
 
 BepInEx generated `/home/steam/valheim_server/BepInEx/config/dev.deepnorth.valheimtelemetry.cfg`. A generated example is in [examples/dev.deepnorth.valheimtelemetry.cfg](examples/dev.deepnorth.valheimtelemetry.cfg).
 
-Defaults enable all event families and snapshots, including player sessions/deaths, tamed-creature deaths, boss kills, portal tag changes, and world-key changes. They include player identity and positions when reliable, use a 300-second interval, and prefix every document with `VALHEIM_TELEMETRY`. Set `DebugLogging = true` to log snapshot duration and object counts. The minimum accepted snapshot interval is 10 seconds.
+Defaults enable all event families and snapshots, including player sessions/deaths, portal trips, tamed-creature deaths, boss kills, portal tag changes, and world-key changes. They include player identity and positions when reliable, use a 300-second interval, and prefix every document with `VALHEIM_TELEMETRY`. Set `DebugLogging = true` to log snapshot duration and object counts. The minimum accepted snapshot interval is 10 seconds.
 
 Configuration errors fall back to safe defaults. Disabling privacy fields keeps their JSON properties but sets their values to `null`.
 
@@ -156,6 +157,10 @@ Configuration errors fall back to safe defaults. Disabling privacy fields keeps 
 
 ```text
 VALHEIM_TELEMETRY {"schema_version":1,"event":"mob_killed","timestamp":"2026-09-25T02:14:17.421Z","world":"DeepNorthOrBust","player_name":"Travis","player_id":"1234","mob_type":"Greydwarf","mob_display_name":"Greydwarf","mob_level":2,"mob_stars":1,"x":123.4,"y":31.2,"z":-412.7,"biome":"BlackForest"}
+```
+
+```text
+VALHEIM_TELEMETRY {"schema_version":1,"event":"portal_travel","timestamp":"2026-09-26T03:30:00.000Z","world":"DeepNorthOrBust-DEV","player_name":"Travis","player_id":"1234","from_portal_id":"123:45","from_portal_type":"portal_wood","from_portal_tag":"Home","from_x":10.0,"from_y":30.0,"from_z":20.0,"from_biome":"Meadows","to_portal_id":"123:99","to_portal_type":"portal_wood","to_portal_tag":"Home","to_x":900.0,"to_y":42.0,"to_z":-300.0,"to_biome":"Swamp","detection_method":"server_position_jump","confidence":"high_confidence"}
 ```
 
 The JSON is invariant-culture, UTC, single-line, and manually serialized without an extra runtime dependency. High-cardinality values remain JSON fields and are not treated as Loki labels.
@@ -221,7 +226,7 @@ Use an unmodified Valheim 1.0 client. For quicker snapshot testing, temporarily 
 5. Encounter/cause a normal spawn; expect one `mob_spawned`, usually with `spawn_source: "unknown"` for `SpawnSystem`.
 6. Build one wall; expect one `piece_built` with its raw prefab type.
 7. Destroy the wall; expect one `piece_destroyed`; destroyer identity may be null.
-8. Build a portal, rename it, then destroy it; expect `portal_built`, `portal_tag_changed`, and `portal_destroyed`. Rename attribution should resolve while the author is connected.
+8. Build and connect two portals, travel through one, rename one, then destroy it; expect `portal_built`, one `portal_travel`, `portal_tag_changed`, and `portal_destroyed`. Rename attribution should resolve while the author is connected. Immediate reverse travel within five seconds is intentionally suppressed as a duplicate safeguard.
 9. Build/destroy a ship through normal play if practical; expect one `ship_built` and one `ship_destroyed`.
 10. Tame an animal; expect one `creature_tamed`, method `player_tamed`, with null player identity.
 11. Kill a tamed animal; expect both `mob_killed` and `tamed_creature_died` for the same creature.
@@ -243,6 +248,7 @@ Use an unmodified Valheim 1.0 client. For quicker snapshot testing, temporarily 
 - Player identity is only present when creator data or a very recent vanilla damage RPC establishes it. When the attacking client owns the target, that RPC is handled locally and is not visible to the dedicated server; environmental, ambiguous, and DOT cases remain null.
 - Player death occurrence is server-visible, but the dedicated server does not receive the client's `Player.m_lastHit`, so `death_cause` is deliberately null.
 - Portal tag author is resolved from the replicated platform-author identifier only while that author appears in the server's current player list.
+- Portal travel is a high-confidence inference because the vanilla trigger and `TeleportTo` execute on the owning client. It requires a recent source proximity, a 12-metre position jump, and arrival beside that source's actual connected portal. Trips through portals closer than 12 metres, delayed replication, or a trip wholly between samples can be missed; an unrelated teleport with exactly the same endpoints can be a false positive.
 - Hammer removal does not reliably identify the remover. Destroy events are still correct, but attribution is normally null.
 - A very tightly timed DOT/environmental death following a server-visible direct player hit could retain the recent-hit identity for up to 0.75 seconds; this is the principal remaining false-attribution edge case to test.
 - Admin commands or another mod that directly flips `tamed` from false to true can look like normal taming.

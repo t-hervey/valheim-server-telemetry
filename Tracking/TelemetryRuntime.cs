@@ -13,6 +13,7 @@ namespace ValheimTelemetry.Tracking
         private readonly LifecycleTracker _lifecycle;
         private readonly SnapshotCollector _snapshots;
         private readonly PlayerSessionTracker _sessions;
+        private readonly PortalTripTracker _portalTrips;
         private readonly PlayerDeathTracker _playerDeaths;
         private readonly WorldStateTracker _worldState;
         private float _readyAt = -1f;
@@ -27,6 +28,7 @@ namespace ValheimTelemetry.Tracking
             _lifecycle = new LifecycleTracker(config, sink);
             _snapshots = new SnapshotCollector(config, sink, log);
             _sessions = new PlayerSessionTracker(config, sink);
+            _portalTrips = new PortalTripTracker(config, sink);
             _playerDeaths = new PlayerDeathTracker(config, sink);
             _worldState = new WorldStateTracker(config.WorldKeys, sink);
         }
@@ -54,6 +56,7 @@ namespace ValheimTelemetry.Tracking
 
             _lifecycle.Tick(now);
             _sessions.Tick();
+            _portalTrips.Tick(now);
             if (now >= _nextSnapshot)
             {
                 _nextSnapshot = now + _config.SnapshotIntervalSeconds;
@@ -76,7 +79,12 @@ namespace ValheimTelemetry.Tracking
         }
         public void PeerConnected(ZNetPeer peer) { if (IsServer()) _sessions.Connected(peer); }
         public void PeerCharacterChanged(ZNetPeer peer) { if (IsServer()) _sessions.CharacterChanged(peer); }
-        public void PeerDisconnected(ZNetPeer peer) { if (IsServer()) _sessions.Disconnected(peer); }
+        public void PeerDisconnected(ZNetPeer peer)
+        {
+            if (!IsServer()) return;
+            _portalTrips.Disconnected(peer);
+            _sessions.Disconnected(peer);
+        }
         public void WorldKeySet(string key, bool existed, string oldValue) { if (Armed && ServerReady()) _worldState.KeySet(key, existed, oldValue); }
         public void WorldKeyRemoved(string key, string oldValue) { if (Armed && ServerReady()) _worldState.KeyRemoved(key, oldValue); }
 
