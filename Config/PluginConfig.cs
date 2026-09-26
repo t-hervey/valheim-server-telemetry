@@ -36,6 +36,11 @@ namespace ValheimTelemetry.Config
         public bool IncludePosition { get; private set; }
         public string Prefix { get; private set; }
 
+        public bool MapExportEnabled { get; private set; }
+        public string MapExportDirectory { get; private set; }
+        public int MapExportResolution { get; private set; }
+        public int MapExportIntervalSeconds { get; private set; }
+
         private PluginConfig()
         {
         }
@@ -72,7 +77,12 @@ namespace ValheimTelemetry.Config
                 IncludePlayerName = Bind(file, log, "Privacy", "IncludePlayerName", true, "Include reliably resolved character names."),
                 IncludePlayerId = Bind(file, log, "Privacy", "IncludePlayerId", true, "Include reliably resolved Valheim character IDs."),
                 IncludePosition = Bind(file, log, "Privacy", "IncludePosition", true, "Include world coordinates."),
-                Prefix = Bind(file, log, "Logging", "Prefix", "VALHEIM_TELEMETRY", "Prefix placed before each one-line JSON document.")
+                Prefix = Bind(file, log, "Logging", "Prefix", "VALHEIM_TELEMETRY", "Prefix placed before each one-line JSON document."),
+
+                MapExportEnabled = Bind(file, log, "MapExport", "Enabled", false, "Generate static terrain and server-observed discovery images for Grafana."),
+                MapExportDirectory = Bind(file, log, "MapExport", "Directory", "BepInEx/map-export", "Local output directory; serve it read-only over HTTP for Grafana."),
+                MapExportResolution = Clamp(Bind(file, log, "MapExport", "Resolution", 512, "Square output image size from 128 through 1024 pixels."), 128, 1024),
+                MapExportIntervalSeconds = Math.Max(30, Bind(file, log, "MapExport", "IntervalSeconds", 300, "Seconds between discovery image refreshes."))
             };
 
             result.Prefix = SanitizePrefix(result.Prefix);
@@ -96,6 +106,11 @@ namespace ValheimTelemetry.Config
         {
             string safe = (value ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
             return safe.Length == 0 ? "VALHEIM_TELEMETRY" : safe;
+        }
+
+        private static int Clamp(int value, int minimum, int maximum)
+        {
+            return Math.Min(maximum, Math.Max(minimum, value));
         }
     }
 }

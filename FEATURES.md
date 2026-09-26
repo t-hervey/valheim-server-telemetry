@@ -25,6 +25,7 @@ This is the canonical inventory of implemented and considered telemetry. Update 
 | `player_died` | Implemented | 1.1.0 | EXACT occurrence | Death cause is unavailable server-only and remains null. |
 | `boss_killed` | Implemented | 1.1.0 | HIGH_CONFIDENCE | Runtime `Character.m_boss` classification; killer identity has the same limitations as mob kills. |
 | `world_key_changed` | Implemented | 1.1.0 | EXACT | Added, updated, and removed global keys after startup grace; covers boss/progression state changes without emitting the startup baseline. |
+| Static map export | Implemented | 1.2.0 | HIGH_CONFIDENCE discovery scope | Outputs terrain/discovery PNGs and metadata. Discovery combines post-install server-observed player positions with vanilla cartography-table data. Disabled by default. |
 
 ## Considered but not implemented
 
@@ -37,7 +38,7 @@ This is the canonical inventory of implemented and considered telemetry. Update 
 | Building repair | Deferred | INFERRED | Repair intent/action is primarily client-side; replicated health increase may be caused by other mechanics. |
 | Structure damage | Deferred | HIGH_CONFIDENCE occurrence | Technically observable through health changes, but high volume and attacker attribution is usually unavailable. |
 | Chat messages / commands | Deferred | EXACT | Server-visible but privacy-sensitive and outside the current gameplay telemetry scope. |
-| Crafting and upgrades | Unavailable server-only | UNAVAILABLE_SERVER_ONLY | Inventory/crafting execution is client-side and no complete authoritative server event is persisted. |
+| Crafting and upgrades | Unavailable server-only | UNAVAILABLE_SERVER_ONLY | Confirmed in 1.0.12: `InventoryGui.DoCrafting` mutates the local player's inventory and profile directly and sends no craft RPC to the dedicated server. |
 | Item pickups and inventory changes | Unavailable server-only | UNAVAILABLE_SERVER_ONLY | No complete passive server-side action stream. |
 | Skill gains | Unavailable server-only | UNAVAILABLE_SERVER_ONLY | Player skill progression is client-owned. |
 | Ordinary attacks/hits | Unavailable as complete stream | UNAVAILABLE_SERVER_ONLY | Only routed damage that traverses the server is visible; client-owned target handling bypasses it. |
@@ -52,4 +53,4 @@ This is the canonical inventory of implemented and considered telemetry. Update 
 - **1.1.0** — added gameplay sessions, player deaths, tamed-creature deaths, boss kills, world-key changes, and portal tag changes.
 - **1.1.1** — added the automated unit-test project and deterministic cache/sink test seams; telemetry schema and event coverage are unchanged.
 - **1.1.2** — added reproducible Stryker mutation testing and strengthened boundary tests; telemetry schema and event coverage are unchanged.
-- **1.2.0** — added conservative server-side portal-travel inference and stable portal ZDO IDs for graphing.
+- **1.2.0** — added conservative server-side portal-travel inference, stable portal ZDO IDs for graphing, and optional static map/discovery exports.

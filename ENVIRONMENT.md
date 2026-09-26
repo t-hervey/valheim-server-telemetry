@@ -22,6 +22,7 @@ Inspected on 2026-09-26 UTC. Paths and versions below are from this development 
 | BepInEx config | `/home/steam/valheim_server/BepInEx/config/BepInEx.cfg` |
 | Plugin config | `/home/steam/valheim_server/BepInEx/config/dev.deepnorth.valheimtelemetry.cfg` |
 | Plugin directory | `/home/steam/valheim_server/BepInEx/plugins` |
+| Development map export | `/home/steam/valheim_server/BepInEx/map-export` |
 | BepInEx file log | `/home/steam/valheim_server/BepInEx/LogOutput.log` |
 | Save root | `/home/steam/valheim-dev-data/config` (LXC-local root filesystem) |
 | World argument | `DeepNorthOrBust-DEV` |

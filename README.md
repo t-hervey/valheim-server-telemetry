@@ -14,6 +14,7 @@ Harmony postfix/prefix observers watch the server's existing persistence and rou
 - vanilla peer lifecycle, player-death RPC/state, portal-tag, and global-key transitions;
 - replicated player positions correlated with the persistent portal connection graph;
 - peer active simulation sectors for periodic loaded/active counts.
+- optional incremental world-biome rendering and server-visible exploration export for Grafana Canvas.
 
 Callbacks only copy or read data, catch their own exceptions, and never suppress a vanilla method. `ITelemetrySink` separates event tracking from output formatting. Lifecycle caches are bounded. A 20-second post-world-load grace means existing ZDOs establish a baseline without generating build, spawn, tame, or felling events.
 
@@ -153,6 +154,22 @@ Defaults enable all event families and snapshots, including player sessions/deat
 
 Configuration errors fall back to safe defaults. Disabling privacy fields keeps their JSON properties but sets their values to `null`.
 
+### Map export and Grafana
+
+Map export is disabled by default because it writes files and the full `terrain.png` reveals world geography. To enable the safer fogged image:
+
+```ini
+[MapExport]
+Enabled = true
+Directory = BepInEx/map-export
+Resolution = 512
+IntervalSeconds = 300
+```
+
+The directory receives `terrain.png`, `discovery.png`, `discovered-map.png`, `metadata.json`, and the internal persistent `discovery.bin`. Terrain generation is incremental on the main thread; file output happens no more than once per interval. Discovery includes connected-player locations observed after enabling the feature and exploration uploaded to any vanilla cartography table. It cannot include older private client exploration that was never uploaded.
+
+Grafana does not read a remote server's filesystem directly. Serve this directory read-only through a small private HTTP endpoint, then use the `discovered-map.png` URL as a Grafana Canvas background. Do not expose the directory publicly. A minimal nginx location is provided in [examples/nginx-valheim-map.conf](examples/nginx-valheim-map.conf); restrict its `allow` rule to the Grafana server or management subnet before enabling it. `metadata.json` supplies the `-10500..10500` coordinate bounds and north-up orientation needed to convert telemetry `x`/`z` values into Canvas positions.
+
 ## Output
 
 ```text
@@ -239,6 +256,7 @@ Use an unmodified Valheim 1.0 client. For quicker snapshot testing, temporarily 
 18. Wait for a snapshot with the client connected; expect `entity_count` lines grouped by runtime type.
 19. Disconnect; expect one `player_disconnected` with `session_duration_seconds`.
 20. Restart again; expect no false lifecycle or `world_key_changed` events from existing state. Snapshot events are allowed.
+21. With map export enabled, connect and move for at least one two-second sample, then wait for the export interval. Expect `metadata.json` to report nonzero `explored_pixels` and the corresponding area to appear in `discovered-map.png`. Writing private exploration to a cartography table should expand the mask on the following export.
 
 ## Known limitations
 
@@ -254,5 +272,6 @@ Use an unmodified Valheim 1.0 client. For quicker snapshot testing, temporarily 
 - Admin commands or another mod that directly flips `tamed` from false to true can look like normal taming.
 - Tree saplings are identified at runtime as `Plant` prefabs whose grown prefab has `TreeBase`. Their destruction is delayed three seconds and suppressed if a grown replacement tree appears nearby. An unhealthy sapling that self-destructs without producing a tree can still look like player destruction because vanilla persists no destruction cause.
 - Snapshot definitions are active/loaded scope, never persistent-world totals.
+- Map discovery is the union of post-install server-observed positions and cartography-table uploads, not every player's historical private minimap. The full terrain image is deterministic world data and should be access-controlled to avoid spoilers.
 
 The canonical versioned feature inventory, including deferred ideas, is [FEATURES.md](FEATURES.md). Detailed hook evidence and classifications are in [OBSERVABILITY.md](OBSERVABILITY.md); the complete schema is in [EVENT_SCHEMA.md](EVENT_SCHEMA.md).

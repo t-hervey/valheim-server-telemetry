@@ -2,6 +2,7 @@ using System;
 using BepInEx.Logging;
 using UnityEngine;
 using ValheimTelemetry.Config;
+using ValheimTelemetry.MapExport;
 using ValheimTelemetry.Telemetry;
 
 namespace ValheimTelemetry.Tracking
@@ -16,6 +17,7 @@ namespace ValheimTelemetry.Tracking
         private readonly PortalTripTracker _portalTrips;
         private readonly PlayerDeathTracker _playerDeaths;
         private readonly WorldStateTracker _worldState;
+        private readonly MapExporter _mapExporter;
         private float _readyAt = -1f;
         private float _nextSnapshot = float.PositiveInfinity;
 
@@ -31,6 +33,7 @@ namespace ValheimTelemetry.Tracking
             _portalTrips = new PortalTripTracker(config, sink);
             _playerDeaths = new PlayerDeathTracker(config, sink);
             _worldState = new WorldStateTracker(config.WorldKeys, sink);
+            _mapExporter = new MapExporter(config, log);
         }
 
         public void Tick()
@@ -57,6 +60,7 @@ namespace ValheimTelemetry.Tracking
             _lifecycle.Tick(now);
             _sessions.Tick();
             _portalTrips.Tick(now);
+            _mapExporter.Tick(now);
             if (now >= _nextSnapshot)
             {
                 _nextSnapshot = now + _config.SnapshotIntervalSeconds;

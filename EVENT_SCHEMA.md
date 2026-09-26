@@ -96,3 +96,17 @@ Startup baseline keys and identical value reassignments are not emitted. Runtime
 | `count` | integer | Count in the union of ready peers' near simulation areas |
 
 Zero-value groups are omitted; an empty snapshot emits no JSON lines. These categories must not be interpreted as persistent world totals.
+
+## Static map artifacts
+
+Map exports are files, not telemetry events and not Loki log lines. When `[MapExport] Enabled = true`, the configured directory contains:
+
+| File | Meaning |
+|---|---|
+| `terrain.png` | Complete deterministic biome-color render; using it can reveal undiscovered terrain |
+| `discovery.png` | Black/white server-observed plus cartography-table discovery mask |
+| `discovered-map.png` | Terrain with undiscovered pixels obscured |
+| `metadata.json` | Coordinate bounds, orientation, world, resolution, coverage, source scope, and generation time |
+| `discovery.bin` | Persistent internal discovery grid; not intended for Grafana |
+
+The image top is positive world Z (north). X increases from left to right. `metadata.json` records `world_min_x`, `world_max_x`, `world_min_z`, and `world_max_z`, allowing world coordinates from telemetry to be converted to image coordinates. Files are replaced atomically where the platform supports it.

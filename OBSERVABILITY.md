@@ -27,6 +27,7 @@ This analysis is based on the installed `assembly_valheim.dll` from Valheim `l-1
 | `tree_felled` | destruction of a standing `TreeBase`, or a tree-growing `Plant` without a nearby grown replacement; `TreeLog` is excluded | Yes | **HIGH_CONFIDENCE** |
 | `world_key_changed` | `ZoneSystem.GlobalKeyAdd` / `GlobalKeyRemove` after startup grace | Yes | **EXACT** |
 | persistent world totals | complete chunk store, safely and cheaply classified | Not as a supported runtime metric | **UNAVAILABLE_SERVER_ONLY** |
+| discovered-map export | replicated player positions plus cartography-table `s_data` | Partial | **HIGH_CONFIDENCE** for included sources; private historical client exploration unavailable |
 
 ## Why ZDO lifecycle is used
 
@@ -87,6 +88,16 @@ A standing tree prefab has `TreeBase`; lethal damage spawns the fallen log/stub 
 ### Snapshots
 
 The dedicated server should not use its own origin-based runtime GameObject set as a world count. The collector reads every ready peer's near `SimulationDistance`, unions ZDOs from those sectors, and de-duplicates overlapping areas by `ZDOID`. Collection runs every five minutes by default and performs no frame-by-frame world scan. Counts may change as players move or disconnect even if nothing is created/destroyed.
+
+### Map export
+
+`Minimap.UpdateExplore` and `PlayerProfile.m_mapData` are client-owned, so the dedicated server cannot reconstruct every player's historical private fog-of-war. A vanilla cartography table is different: `MapTable.RPC_MapData` persists the compressed shared exploration array in the table ZDO's `ZDOVars.s_data`, which is server-visible. When enabled, the exporter merges those arrays with 100-metre discovery circles around server-observed connected-player positions and persists that union locally across restarts.
+
+Terrain colors come deterministically from the installed `WorldGenerator.GetBiome` over the playable `-10500..10500` coordinate range. Generation is divided into batches of 1,024 pixels per frame, then PNG and metadata writes occur at most once per configured interval. The output is a visualization rather than a byte-for-byte capture of the client's shaded minimap. It does not include private exploration performed before plugin installation unless a player uploaded it to a cartography table.
+
+### Crafting
+
+Valheim 1.0.12 completes crafting in `InventoryGui.DoCrafting` on `Player.m_localPlayer`. That method removes resources, adds or upgrades the item in the local `Inventory`, writes crafter identity, updates the local profile statistics, and does not invoke a vanilla RPC that describes the craft. The dedicated server can later receive player-save/inventory state, but a delta cannot distinguish crafting from pickup, transfer, spawning, restoration, or other inventory changes. Exact or high-confidence passive `item_crafted` telemetry is therefore **UNAVAILABLE_SERVER_ONLY**. The plugin will not infer it from ambiguous inventory changes; reliable support would require a client mod or a future authoritative vanilla server event.
 
 ## Deduplication and failure modes
 
