@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Text;
 
 namespace ValheimTelemetry.MapExport
@@ -24,7 +25,7 @@ namespace ValheimTelemetry.MapExport
                 header[8] = 8;
                 header[9] = 2;
                 WriteChunk(output, "IHDR", header);
-                WriteChunk(output, "IDAT", ZlibStore(BuildScanlines(width, height, rgb)));
+                WriteChunk(output, "IDAT", ZlibCompress(BuildScanlines(width, height, rgb)));
                 WriteChunk(output, "IEND", Array.Empty<byte>());
                 return output.ToArray();
             }
@@ -43,25 +44,15 @@ namespace ValheimTelemetry.MapExport
             return scanlines;
         }
 
-        private static byte[] ZlibStore(byte[] data)
+        private static byte[] ZlibCompress(byte[] data)
         {
-            using (var output = new MemoryStream(data.Length + data.Length / 65535 * 5 + 16))
+            using (var output = new MemoryStream())
             {
                 output.WriteByte(0x78);
                 output.WriteByte(0x01);
-                int offset = 0;
-                while (offset < data.Length)
+                using (var compressor = new DeflateStream(output, CompressionLevel.Fastest, true))
                 {
-                    int length = Math.Min(65535, data.Length - offset);
-                    bool final = offset + length == data.Length;
-                    output.WriteByte(final ? (byte)1 : (byte)0);
-                    output.WriteByte((byte)length);
-                    output.WriteByte((byte)(length >> 8));
-                    int complement = (~length) & 0xffff;
-                    output.WriteByte((byte)complement);
-                    output.WriteByte((byte)(complement >> 8));
-                    output.Write(data, offset, length);
-                    offset += length;
+                    compressor.Write(data, 0, data.Length);
                 }
                 uint adler = Adler32(data);
                 WriteUInt32(output, adler);

@@ -36,6 +36,21 @@ public sealed class PngEncoderTests
         act.Should().Throw<ArgumentException>().WithParameterName("rgb");
     }
 
+    [Fact]
+    public void EncodeRgb_RepeatedPixels_CompressesBelowRawScanlineSize()
+    {
+        // Arrange
+        const int width = 64;
+        const int height = 64;
+        var rgb = new byte[width * height * 3];
+
+        // Act
+        byte[] result = PngEncoder.EncodeRgb(width, height, rgb);
+
+        // Assert
+        result.Length.Should().BeLessThan((width * 3 + 1) * height);
+    }
+
     private static uint ReadBigEndian(byte[] data, int offset)
     {
         return ((uint)data[offset] << 24)
