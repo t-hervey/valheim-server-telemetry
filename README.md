@@ -162,11 +162,13 @@ Map export is disabled by default because it writes files and the full `terrain.
 [MapExport]
 Enabled = true
 Directory = BepInEx/map-export
-Resolution = 512
+Resolution = 2048
 IntervalSeconds = 300
 ```
 
-The directory receives `terrain.png`, `discovery.png`, `discovered-map.png`, `metadata.json`, and the internal persistent `discovery.bin`. Terrain generation is incremental on the main thread; file output happens no more than once per interval. Discovery includes connected-player locations observed after enabling the feature and exploration uploaded to any vanilla cartography table. It cannot include older private client exploration that was never uploaded.
+The directory receives `terrain.png`, `discovery.png`, `discovered-map.png`, `metadata.json`, and the internal persistent `discovery.bin`. The default 2048×2048 render covers the playable `-10500..10500` coordinate square at approximately 10.25 metres per pixel, slightly finer than Valheim's native 12-metre minimap sampling. Terrain generation is incremental on the main thread; file output happens no more than once per interval. Existing lower-resolution `discovery.bin` data is resampled when the configured resolution increases.
+
+Terrain pixels use both the biome and deterministic generated terrain height. `Ocean` remains dark blue (`#26516E`); generated terrain below Valheim's 30-metre water plane but belonging to another biome is rendered lighter blue (`#4A90B8`). This distinguishes lakes, rivers, and flooded biome terrain without depth coloring, shoreline smoothing, forest masks, or terrain shading. Discovery includes connected-player locations observed after enabling the feature and exploration uploaded to any vanilla cartography table. It cannot include older private client exploration that was never uploaded.
 
 Grafana does not read a remote server's filesystem directly. Serve this directory read-only through a small private HTTP endpoint, then use the `discovered-map.png` URL as a Grafana Canvas background. Do not expose the directory publicly. A minimal nginx location is provided in [examples/nginx-valheim-map.conf](examples/nginx-valheim-map.conf); restrict its `allow` rule to the Grafana server or management subnet before enabling it. `metadata.json` supplies the `-10500..10500` coordinate bounds and north-up orientation needed to convert telemetry `x`/`z` values into Canvas positions.
 

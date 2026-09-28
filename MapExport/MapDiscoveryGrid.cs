@@ -69,8 +69,24 @@ namespace ValheimTelemetry.MapExport
 
         public void Load(byte[] pixels)
         {
-            if (pixels == null || pixels.Length != _pixels.Length) return;
-            Buffer.BlockCopy(pixels, 0, _pixels, 0, pixels.Length);
+            if (pixels == null) return;
+            if (pixels.Length == _pixels.Length)
+            {
+                Buffer.BlockCopy(pixels, 0, _pixels, 0, pixels.Length);
+                return;
+            }
+
+            int sourceResolution = (int)Math.Sqrt(pixels.Length);
+            if (sourceResolution <= 0 || sourceResolution * sourceResolution != pixels.Length) return;
+            for (int y = 0; y < Resolution; y++)
+            {
+                int sourceY = y * sourceResolution / Resolution;
+                for (int x = 0; x < Resolution; x++)
+                {
+                    int sourceX = x * sourceResolution / Resolution;
+                    _pixels[y * Resolution + x] = pixels[sourceY * sourceResolution + sourceX];
+                }
+            }
         }
 
         private int WorldToPixel(float coordinate)

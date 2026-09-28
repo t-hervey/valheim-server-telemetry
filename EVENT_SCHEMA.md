@@ -103,10 +103,10 @@ Map exports are files, not telemetry events and not Loki log lines. When `[MapEx
 
 | File | Meaning |
 |---|---|
-| `terrain.png` | Complete deterministic biome-color render; using it can reveal undiscovered terrain |
+| `terrain.png` | Complete deterministic biome-and-height render; non-ocean water is lighter blue than the Ocean biome, and using it can reveal undiscovered terrain |
 | `discovery.png` | Black/white server-observed plus cartography-table discovery mask |
 | `discovered-map.png` | Terrain with undiscovered pixels obscured |
 | `metadata.json` | Coordinate bounds, orientation, world, resolution, coverage, source scope, and generation time |
 | `discovery.bin` | Persistent internal discovery grid; not intended for Grafana |
 
-The image top is positive world Z (north). X increases from left to right. `metadata.json` records `world_min_x`, `world_max_x`, `world_min_z`, and `world_max_z`, allowing world coordinates from telemetry to be converted to image coordinates. Files are replaced atomically where the platform supports it.
+The image top is positive world Z (north). X increases from left to right. `metadata.json` records `world_min_x`, `world_max_x`, `world_min_z`, `world_max_z`, `meters_per_pixel`, the 30-metre water cutoff, and the ocean/inland-water colors, allowing world coordinates from telemetry to be converted to image coordinates. Files are replaced atomically where the platform supports it.

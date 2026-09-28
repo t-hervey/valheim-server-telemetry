@@ -81,7 +81,7 @@ namespace ValheimTelemetry.Config
 
                 MapExportEnabled = Bind(file, log, "MapExport", "Enabled", false, "Generate static terrain and server-observed discovery images for Grafana."),
                 MapExportDirectory = Bind(file, log, "MapExport", "Directory", "BepInEx/map-export", "Local output directory; serve it read-only over HTTP for Grafana."),
-                MapExportResolution = Clamp(Bind(file, log, "MapExport", "Resolution", 512, "Square output image size from 128 through 1024 pixels."), 128, 1024),
+                MapExportResolution = Clamp(Bind(file, log, "MapExport", "Resolution", 2048, "Square output image size from 128 through 2048 pixels."), 128, 2048),
                 MapExportIntervalSeconds = Math.Max(30, Bind(file, log, "MapExport", "IntervalSeconds", 300, "Seconds between discovery image refreshes."))
             };
 

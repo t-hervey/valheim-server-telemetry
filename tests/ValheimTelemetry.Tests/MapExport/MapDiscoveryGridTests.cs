@@ -90,4 +90,22 @@ public sealed class MapDiscoveryGridTests
         // Assert
         sut.Pixels.Should().Equal(persisted);
     }
+
+    [Fact]
+    public void Load_DifferentSquareResolution_ResamplesDiscovery()
+    {
+        // Arrange
+        var sut = new MapDiscoveryGrid(4);
+        byte[] persisted = { 0, 1, 1, 0 };
+
+        // Act
+        sut.Load(persisted);
+
+        // Assert
+        sut.Pixels.Should().Equal(
+            0, 0, 1, 1,
+            0, 0, 1, 1,
+            1, 1, 0, 0,
+            1, 1, 0, 0);
+    }
 }

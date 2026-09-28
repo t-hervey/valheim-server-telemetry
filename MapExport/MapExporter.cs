@@ -104,32 +104,35 @@ namespace ValheimTelemetry.MapExport
                 int y = _terrainPixel / resolution;
                 float worldX = MapDiscoveryGrid.WorldMinimum + (x + 0.5f) * span / resolution;
                 float worldZ = MapDiscoveryGrid.WorldMaximum - (y + 0.5f) * span / resolution;
-                SetBiomeColor(_terrainPixel * 3, generator.GetBiome(worldX, worldZ));
+                Heightmap.Biome biome = generator.GetBiome(worldX, worldZ);
+                Color terrainMask;
+                float terrainHeight = generator.GetBiomeHeight(biome, worldX, worldZ, out terrainMask);
+                SetTerrainColor(_terrainPixel * 3, biome, terrainHeight);
                 _terrainPixel++;
             }
             _terrainReady = _terrainPixel == resolution * resolution;
         }
 
-        private void SetBiomeColor(int offset, Heightmap.Biome biome)
+        private void SetTerrainColor(int offset, Heightmap.Biome biome, float terrainHeight)
         {
-            byte r;
-            byte g;
-            byte b;
+            MapPixelColor biomeColor;
             switch (biome)
             {
-                case Heightmap.Biome.Meadows: r = 83; g = 145; b = 70; break;
-                case Heightmap.Biome.BlackForest: r = 29; g = 83; b = 46; break;
-                case Heightmap.Biome.Swamp: r = 76; g = 75; b = 61; break;
-                case Heightmap.Biome.Mountain: r = 205; g = 215; b = 220; break;
-                case Heightmap.Biome.Plains: r = 181; g = 165; b = 75; break;
-                case Heightmap.Biome.Mistlands: r = 78; g = 71; b = 92; break;
-                case Heightmap.Biome.AshLands: r = 111; g = 45; b = 39; break;
-                case Heightmap.Biome.DeepNorth: r = 180; g = 211; b = 221; break;
-                default: r = 38; g = 81; b = 110; break;
+                case Heightmap.Biome.Meadows: biomeColor = new MapPixelColor(83, 145, 70); break;
+                case Heightmap.Biome.BlackForest: biomeColor = new MapPixelColor(29, 83, 46); break;
+                case Heightmap.Biome.Swamp: biomeColor = new MapPixelColor(76, 75, 61); break;
+                case Heightmap.Biome.Mountain: biomeColor = new MapPixelColor(205, 215, 220); break;
+                case Heightmap.Biome.Plains: biomeColor = new MapPixelColor(181, 165, 75); break;
+                case Heightmap.Biome.Mistlands: biomeColor = new MapPixelColor(78, 71, 92); break;
+                case Heightmap.Biome.AshLands: biomeColor = new MapPixelColor(111, 45, 39); break;
+                case Heightmap.Biome.DeepNorth: biomeColor = new MapPixelColor(180, 211, 221); break;
+                default: biomeColor = MapTerrainPalette.Ocean; break;
             }
-            _terrain[offset] = r;
-            _terrain[offset + 1] = g;
-            _terrain[offset + 2] = b;
+
+            MapPixelColor color = MapTerrainPalette.Select(biome == Heightmap.Biome.Ocean, terrainHeight, biomeColor);
+            _terrain[offset] = color.Red;
+            _terrain[offset + 1] = color.Green;
+            _terrain[offset + 2] = color.Blue;
         }
 
         private void Export(float now)
@@ -215,6 +218,11 @@ namespace ValheimTelemetry.MapExport
                 .Add("world_min_z", MapDiscoveryGrid.WorldMinimum)
                 .Add("world_max_z", MapDiscoveryGrid.WorldMaximum)
                 .Add("image_top", "north_positive_z")
+                .Add("meters_per_pixel", (MapDiscoveryGrid.WorldMaximum - MapDiscoveryGrid.WorldMinimum) / resolution)
+                .Add("terrain_rendering", "biome_plus_generated_height")
+                .Add("water_level", MapTerrainPalette.WaterLevel)
+                .Add("ocean_color", "#26516E")
+                .Add("inland_water_color", "#4A90B8")
                 .Add("explored_pixels", explored)
                 .Add("coverage_percent", coverage)
                 .Add("cartography_tables", tableCount)

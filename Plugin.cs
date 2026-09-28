@@ -13,7 +13,7 @@ namespace ValheimTelemetry
     {
         public const string PluginGuid = "dev.deepnorth.valheimtelemetry";
         public const string PluginName = "ValheimTelemetry";
-        public const string PluginVersion = "1.2.0";
+        public const string PluginVersion = "1.3.0";
 
         internal static TelemetryRuntime Runtime { get; private set; }
         internal static ManualLogSource Log { get; private set; }

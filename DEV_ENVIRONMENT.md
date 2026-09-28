@@ -12,7 +12,7 @@
 - Installed BepInEx 5.4.23.5 locally and changed the local launch script to run the server through `run_bepinex.sh`.
 - Enabled BepInEx console logging to `StandardOut` so systemd/journald receives complete telemetry lines.
 - Grafana Alloy 1.19.2 was installed in the clone with an existing production-style configuration. It was already disabled/inactive and was masked locally with `systemctl mask --now alloy.service` to prevent cloned telemetry export. `/etc/alloy/config.alloy` now routes Valheim journal entries through a validated telemetry processor that strips the BepInEx prefix, preserves a pure JSON Loki body, adds bounded event/world/category labels, and attaches the remaining JSON properties—including the v1.2.0 portal graph fields—as structured metadata. An offline `loki.echo` test confirmed metadata extraction and unchanged pass-through for non-telemetry lines. Alloy remains masked and inactive; no remote endpoint was contacted. Backups are `/etc/alloy/config.alloy.before-valheim-structured-20260925` and `/etc/alloy/config.alloy.pre-portal-travel`.
-- Enabled the optional v1.2.0 map exporter only in the clone's generated plugin configuration. It writes to `/home/steam/valheim_server/BepInEx/map-export`; a 512×512 real-world validation generated valid terrain, discovery, and fogged PNGs plus coordinate metadata in 102 ms after incremental terrain preparation. No LAN-facing HTTP listener was enabled because the authorized Grafana address is not known.
+- Enabled the optional map exporter only in the clone's generated plugin configuration. v1.3.0 raised the clone to 2048×2048 and added generated-height water classification: `Ocean` is `#26516E`, while terrain below Y=30 in another biome is `#4A90B8`. A real-world validation generated all three 2048×2048 PNGs, a 4 MiB migrated discovery grid, and extended metadata beneath `/home/steam/valheim_server/BepInEx/map-export`. The incremental 4,194,304-pixel terrain pass completed in about 138 seconds; final image encoding/writes took 1.4 seconds. The three uncompressed-deflate PNGs occupy about 39 MiB together. The service remained healthy, with about 1.85 GB observed peak memory. No LAN-facing HTTP listener was enabled by this project because the authorized Grafana address is not known.
 - Tailscale is not installed. No Tailscale identity was touched.
 - No custom user/root crontabs, backup agents, DDNS jobs, or custom systemd timers were found. Installed timers are routine apt, dpkg, logrotate, man-db, sysstat, tmpfiles, filesystem trim/scrub, MOTD, and Ubuntu Advantage timers.
 - An enabled but inactive rsync service has no configured start condition/socket. Postfix is loopback-only. Neither was changed.
@@ -44,6 +44,9 @@ The native Ubuntu package manager was used after detecting Ubuntu 25.04 (`plucky
 | `lsof` | 4.99.4 |
 | `strace` | 6.14 |
 | `dotnet-sdk-8.0` | SDK 8.0.122, runtime 8.0.22 |
+| `python3.13-venv` | 3.13.3-1ubuntu0.5 |
+| `python3-pip-whl` | 25.0+dfsg-1ubuntu0.2 |
+| `python3-setuptools-whl` | 75.8.0-1ubuntu1 |
 
 The Ubuntu repository supplied the .NET SDK; no Microsoft package repository was required. `gdb`, desktop environments, and Unity Editor were not installed.
 
