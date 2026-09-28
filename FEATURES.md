@@ -25,7 +25,7 @@ This is the canonical inventory of implemented and considered telemetry. Update 
 | `player_died` | Implemented | 1.1.0 | EXACT occurrence | Death cause is unavailable server-only and remains null. |
 | `boss_killed` | Implemented | 1.1.0 | HIGH_CONFIDENCE | Runtime `Character.m_boss` classification; killer identity has the same limitations as mob kills. |
 | `world_key_changed` | Implemented | 1.1.0 | EXACT | Added, updated, and removed global keys after startup grace; covers boss/progression state changes without emitting the startup baseline. |
-| Static map export | Implemented | 1.2.0 | HIGH_CONFIDENCE discovery scope | Outputs terrain/discovery PNGs and metadata. v1.3.0 renders at 2048×2048 by default and distinguishes generated non-ocean water by height. Discovery combines post-install server-observed player positions with vanilla cartography-table data. Disabled by default. |
+| Static map export | Implemented | 1.2.0 | HIGH_CONFIDENCE discovery scope | Outputs terrain/discovery PNGs and metadata. v1.3.0 renders at 2048×2048 by default and distinguishes generated non-ocean water by height; v1.3.1 adds distinct Swamp-water and Mistlands colors. Discovery combines post-install server-observed player positions with vanilla cartography-table data. Disabled by default. |
 
 ## Considered but not implemented
 
@@ -55,3 +55,4 @@ This is the canonical inventory of implemented and considered telemetry. Update 
 - **1.1.2** — added reproducible Stryker mutation testing and strengthened boundary tests; telemetry schema and event coverage are unchanged.
 - **1.2.0** — added conservative server-side portal-travel inference, stable portal ZDO IDs for graphing, and optional static map/discovery exports.
 - **1.3.0** — raised default map output to 2048×2048, classified generated water independently of biome, and preserved discovery when migrating from lower-resolution grids.
+- **1.3.1** — added a biome-aware Swamp-water tint and a more saturated Mistlands purple without enabling smoothing, supersampling, depth, forest, or terrain shading.

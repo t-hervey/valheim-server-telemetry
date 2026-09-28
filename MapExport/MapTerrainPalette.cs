@@ -21,11 +21,14 @@ namespace ValheimTelemetry.MapExport
 
         public static readonly MapPixelColor Ocean = new MapPixelColor(38, 81, 110);
         public static readonly MapPixelColor InlandWater = new MapPixelColor(74, 144, 184);
+        public static readonly MapPixelColor SwampWater = new MapPixelColor(75, 120, 141);
+        public static readonly MapPixelColor Mistlands = new MapPixelColor(116, 83, 143);
 
-        public static MapPixelColor Select(bool isOceanBiome, float terrainHeight, MapPixelColor biomeColor)
+        public static MapPixelColor Select(bool isOceanBiome, bool isSwampBiome, float terrainHeight, MapPixelColor biomeColor)
         {
             if (isOceanBiome) return Ocean;
-            return terrainHeight < WaterLevel ? InlandWater : biomeColor;
+            if (terrainHeight >= WaterLevel) return biomeColor;
+            return isSwampBiome ? SwampWater : InlandWater;
         }
     }
 }

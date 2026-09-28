@@ -13,7 +13,7 @@ public sealed class MapTerrainPaletteTests
         var biomeColor = new MapPixelColor(83, 145, 70);
 
         // Act
-        MapPixelColor result = MapTerrainPalette.Select(false, 29.99f, biomeColor);
+        MapPixelColor result = MapTerrainPalette.Select(false, false, 29.99f, biomeColor);
 
         // Assert
         result.Should().BeEquivalentTo(MapTerrainPalette.InlandWater);
@@ -29,7 +29,7 @@ public sealed class MapTerrainPaletteTests
         var biomeColor = new MapPixelColor(83, 145, 70);
 
         // Act
-        MapPixelColor result = MapTerrainPalette.Select(false, MapTerrainPalette.WaterLevel, biomeColor);
+        MapPixelColor result = MapTerrainPalette.Select(false, false, MapTerrainPalette.WaterLevel, biomeColor);
 
         // Assert
         result.Should().BeEquivalentTo(biomeColor);
@@ -42,9 +42,23 @@ public sealed class MapTerrainPaletteTests
         var biomeColor = new MapPixelColor(83, 145, 70);
 
         // Act
-        MapPixelColor result = MapTerrainPalette.Select(true, 100f, biomeColor);
+        MapPixelColor result = MapTerrainPalette.Select(true, false, 100f, biomeColor);
 
         // Assert
         result.Should().BeEquivalentTo(MapTerrainPalette.Ocean);
+    }
+
+    [Fact]
+    public void Select_SwampTerrainBelowWaterLevel_ReturnsSwampWaterColor()
+    {
+        // Arrange
+        var biomeColor = new MapPixelColor(76, 75, 61);
+
+        // Act
+        MapPixelColor result = MapTerrainPalette.Select(false, true, 29.99f, biomeColor);
+
+        // Assert
+        result.Should().BeEquivalentTo(MapTerrainPalette.SwampWater);
+        result.Should().NotBeEquivalentTo(MapTerrainPalette.InlandWater);
     }
 }

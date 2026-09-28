@@ -123,13 +123,17 @@ namespace ValheimTelemetry.MapExport
                 case Heightmap.Biome.Swamp: biomeColor = new MapPixelColor(76, 75, 61); break;
                 case Heightmap.Biome.Mountain: biomeColor = new MapPixelColor(205, 215, 220); break;
                 case Heightmap.Biome.Plains: biomeColor = new MapPixelColor(181, 165, 75); break;
-                case Heightmap.Biome.Mistlands: biomeColor = new MapPixelColor(78, 71, 92); break;
+                case Heightmap.Biome.Mistlands: biomeColor = MapTerrainPalette.Mistlands; break;
                 case Heightmap.Biome.AshLands: biomeColor = new MapPixelColor(111, 45, 39); break;
                 case Heightmap.Biome.DeepNorth: biomeColor = new MapPixelColor(180, 211, 221); break;
                 default: biomeColor = MapTerrainPalette.Ocean; break;
             }
 
-            MapPixelColor color = MapTerrainPalette.Select(biome == Heightmap.Biome.Ocean, terrainHeight, biomeColor);
+            MapPixelColor color = MapTerrainPalette.Select(
+                biome == Heightmap.Biome.Ocean,
+                biome == Heightmap.Biome.Swamp,
+                terrainHeight,
+                biomeColor);
             _terrain[offset] = color.Red;
             _terrain[offset + 1] = color.Green;
             _terrain[offset + 2] = color.Blue;
@@ -223,6 +227,8 @@ namespace ValheimTelemetry.MapExport
                 .Add("water_level", MapTerrainPalette.WaterLevel)
                 .Add("ocean_color", "#26516E")
                 .Add("inland_water_color", "#4A90B8")
+                .Add("swamp_water_color", "#4B788D")
+                .Add("mistlands_color", "#74538F")
                 .Add("explored_pixels", explored)
                 .Add("coverage_percent", coverage)
                 .Add("cartography_tables", tableCount)
